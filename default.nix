@@ -1,11 +1,11 @@
-{ mkDerivation, alex, array, base, happy, stdenv }:
+{ mkDerivation, alex, array, base, happy, mtl, stdenv }:
 mkDerivation {
   pname = "rosa";
   version = "0.1.0.0";
   src = ./.;
   isLibrary = true;
   isExecutable = true;
-  libraryHaskellDepends = [ array base ];
+  libraryHaskellDepends = [ array base mtl ];
   libraryToolDepends = [ alex happy ];
   executableHaskellDepends = [ base ];
   license = stdenv.lib.licenses.bsd3;

@@ -18,12 +18,13 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Rosa.Compiler
   other-modules:       Rosa.AST
-                       Rosa.CodeGen
+                       Rosa.Codegen
                        Rosa.Lexer
                        Rosa.Parser
   -- other-extensions:
   build-depends:       array >=0.5 && <0.6,
-                       base >=4.12 && <4.13
+                       base >=4.12 && <4.13,
+                       mtl >=2.2 && <2.3
   build-tools:         alex >=3.2 && <3.3,
                        happy >=1.19 && <1.20
   hs-source-dirs:      src

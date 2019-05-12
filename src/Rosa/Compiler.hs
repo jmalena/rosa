@@ -2,8 +2,8 @@ module Rosa.Compiler (
   compile
 ) where
 
-import Rosa.CodeGen
+import Rosa.Codegen
 import Rosa.Parser
 
 compile :: String -> Either String String
-compile s = codegen <$> parse s
+compile s = (runCodegen . codegen) <$> parse s
