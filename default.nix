@@ -1,4 +1,6 @@
-{ mkDerivation, alex, array, base, happy, mtl, stdenv }:
+{ mkDerivation, alex, array, base, happy, mtl, optparse-applicative
+, process, stdenv
+}:
 mkDerivation {
   pname = "rosa";
   version = "0.1.0.0";
@@ -7,6 +9,6 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [ array base mtl ];
   libraryToolDepends = [ alex happy ];
-  executableHaskellDepends = [ base ];
+  executableHaskellDepends = [ base optparse-applicative process ];
   license = stdenv.lib.licenses.bsd3;
 }
