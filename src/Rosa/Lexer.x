@@ -19,6 +19,9 @@ tokens :-
   \{                            { \s -> TokenLBracket }
   \}                            { \s -> TokenRBracket }
   \;                            { \s -> TokenSemi }
+  \~                            { \s -> TokenBitCompl }
+  \!                            { \s -> TokenLogCompl }
+  \-                            { \s -> TokenMinus }
   "return"                      { \s -> TokenRetKeyword }
   "int"                         { \s -> TokenIntKeyword }
   $digit+                       { \s -> TokenInt (read s) }
@@ -31,6 +34,9 @@ data Token
   | TokenLBracket
   | TokenRBracket
   | TokenSemi
+  | TokenBitCompl
+  | TokenLogCompl
+  | TokenMinus
   | TokenRetKeyword
   | TokenIntKeyword
   | TokenInt Int

@@ -18,6 +18,9 @@ import Rosa.Lexer
   '{'      { TokenLBracket }
   '}'      { TokenRBracket }
   ';'      { TokenSemi }
+  '~'      { TokenBitCompl }
+  '!'      { TokenLogCompl }
+  '-'      { TokenMinus }
   return   { TokenRetKeyword }
   int      { TokenIntKeyword }
   INT      { TokenInt $$ }
@@ -25,13 +28,18 @@ import Rosa.Lexer
 
 
 %%
-Program : Function                               { $1 }
+Program : FunctionDecl                               { $1 }
 
-Function : int IDENT '(' ')' '{' Statement '}'   { Func $2 [$6] }
+FunctionDecl : int IDENT '(' ')' '{' Statement '}'   { Func $2 [$6] }
 
-Statement : return Expr ';'                      { Return $2 }
+Statement : return Expr ';'                          { Return $2 }
 
-Expr : INT                                       { Lit (LInt $1) }
+Expr : UnaryOp Expr                                  { UnaryOp $1 $2 }
+     | INT                                           { Lit (LInt $1) }
+
+UnaryOp : '~'                                        { BitCompl }
+        | '!'                                        { LogCompl }
+        | '-'                                        { Negation }
 
 {
 type P a = String -> Int -> Either String a
