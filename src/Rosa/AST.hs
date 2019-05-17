@@ -3,7 +3,8 @@ module Rosa.AST (
   Stmt(..),
   Expr(..),
   Lit(..),
-  UnaryOp(..)
+  UnaryOp(..),
+  BinaryOp(..)
 ) where
 
 data Defn
@@ -17,14 +18,22 @@ data Stmt
 data Expr
   = Lit Lit
   | UnaryOp UnaryOp Expr
+  | BinaryOp BinaryOp Expr Expr
   deriving (Eq, Show)
 
 data Lit
-  = LInt Int
+  = LInt64 Int
   deriving (Eq, Show)
 
 data UnaryOp
-  = BitCompl
-  | LogCompl
-  | Negation
+  = OpBitCompl
+  | OpLogCompl
+  | OpAddCompl
+  deriving (Eq, Show)
+
+data BinaryOp
+  = OpAdd
+  | OpSub
+  | OpMul
+  | OpDiv
   deriving (Eq, Show)

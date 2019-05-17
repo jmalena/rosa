@@ -21,7 +21,10 @@ tokens :-
   \;                            { \s -> TokenSemi }
   \~                            { \s -> TokenBitCompl }
   \!                            { \s -> TokenLogCompl }
+  \+                            { \s -> TokenPlus }
   \-                            { \s -> TokenMinus }
+  \*                            { \s -> TokenMul }
+  \/                            { \s -> TokenDiv }
   "return"                      { \s -> TokenRetKeyword }
   "int"                         { \s -> TokenIntKeyword }
   $digit+                       { \s -> TokenInt (read s) }
@@ -36,7 +39,10 @@ data Token
   | TokenSemi
   | TokenBitCompl
   | TokenLogCompl
+  | TokenPlus
   | TokenMinus
+  | TokenMul
+  | TokenDiv
   | TokenRetKeyword
   | TokenIntKeyword
   | TokenInt Int

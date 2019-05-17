@@ -20,7 +20,10 @@ import Rosa.Lexer
   ';'      { TokenSemi }
   '~'      { TokenBitCompl }
   '!'      { TokenLogCompl }
+  '+'      { TokenPlus }
   '-'      { TokenMinus }
+  '*'      { TokenMul }
+  '/'      { TokenDiv }
   return   { TokenRetKeyword }
   int      { TokenIntKeyword }
   INT      { TokenInt $$ }
@@ -34,12 +37,22 @@ FunctionDecl : int IDENT '(' ')' '{' Statement '}'   { Func $2 [$6] }
 
 Statement : return Expr ';'                          { Return $2 }
 
-Expr : UnaryOp Expr                                  { UnaryOp $1 $2 }
-     | INT                                           { Lit (LInt $1) }
+Expr : Expr '+' Term                                 { BinaryOp OpAdd $1 $3 }
+     | Expr '-' Term                                 { BinaryOp OpSub $1 $3 }
+     | Term                                          { $1 }
 
-UnaryOp : '~'                                        { BitCompl }
-        | '!'                                        { LogCompl }
-        | '-'                                        { Negation }
+
+Term : Term '*' Factor                               { BinaryOp OpMul $1 $3 }
+     | Term '/' Factor                               { BinaryOp OpDiv $1 $3 }
+     | Factor                                        { $1 }
+
+Factor : '(' Expr ')'                                { $2 }
+       | UnaryOp Factor                              { UnaryOp $1 $2 }
+       | INT                                         { Lit (LInt64 $1) }
+
+UnaryOp : '~'                                        { OpBitCompl }
+        | '!'                                        { OpLogCompl }
+        | '-'                                        { OpAddCompl }
 
 {
 type P a = String -> Int -> Either String a

@@ -41,23 +41,37 @@ emitDefn (Func ident body) = do
   emit 0 ""
 
 emitStmt :: Stmt -> Codegen ()
-emitStmt (Return expr) = do
-  case extractLit expr of
-    LInt val ->
-      emit 2 $ "movl $" <> show val <> ", %eax"
-  emitExpr "eax" expr
+emitStmt (Return expr) =
+  emitExpr "rax" expr
 
 emitExpr :: String -> Expr -> Codegen ()
-emitExpr _ (Lit _) = pure ()
-emitExpr reg (UnaryOp BitCompl _) =
+emitExpr reg (Lit (LInt64 val)) =
+  emit 2 $ "movq $" <> show val <> ", %" <> reg
+emitExpr reg (UnaryOp OpBitCompl expr) = do
+  emitExpr reg expr
   emit 2 $ "not %" <> reg
-emitExpr reg (UnaryOp LogCompl _) = do
-  emit 2 $ "cmpl $0, %" <> reg
-  emit 2 $ "movl $0, %" <> reg
+emitExpr reg (UnaryOp OpLogCompl expr) = do
+  emitExpr reg expr
+  emit 2 $ "cmpq $0, %" <> reg
+  emit 2 $ "movq $0, %" <> reg
   emit 2 $ "sete %al"
-emitExpr reg (UnaryOp Negation _) =
+emitExpr reg (UnaryOp OpAddCompl expr) = do
+  emitExpr reg expr
   emit 2 $ "neg %" <> reg
-
-extractLit :: Expr -> Lit
-extractLit (Lit lit) = lit
-extractLit (UnaryOp _ expr) = extractLit expr
+emitExpr reg (BinaryOp OpAdd expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx" -- make %rcx variable
+  emit 2 $ "addq %rcx, %" <> reg -- make %rcx variable
+emitExpr reg (BinaryOp OpSub expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx" -- make %rcx variable
+  emit 2 $ "subq %" <> reg <> ", %rcx" -- make %rcx variable
+  emit 2 $ "movq %rcx, %" <> reg -- probably inefficient due to this redundant (?) movq
+emitExpr reg (BinaryOp OpMul expr1 expr2) =
+  error "64-bit multiplication is not supported yet"
+emitExpr reg (BinaryOp OpDiv expr1 expr2) =
+  error "64-bit division is not supported yet"
