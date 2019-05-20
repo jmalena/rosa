@@ -1,9 +1,9 @@
-language: haskell
-ghc:
-  - 8.6.5
+language: nix
 before_install:
-  - sudo add-apt-repository ppa:duggan/bats
+  - sudo add-apt-repository ppa:duggan/bats -y
   - sudo apt-get update
   - sudo apt-get install bats
+install:
+  - nix-build release.nix
 script:
   - ./tests/run_tests.sh
