@@ -1,0 +1,9 @@
+language: haskell
+ghc:
+  - 8.6.5
+before_install:
+  - sudo add-apt-repository ppa:duggan/bats
+  - sudo apt-get update
+  - sudo apt-get install bats
+script:
+  - ./tests/run_tests.sh
