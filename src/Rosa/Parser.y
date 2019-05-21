@@ -20,35 +20,54 @@ import Rosa.Lexer
   ';'      { TokenSemi }
   '~'      { TokenBitCompl }
   '!'      { TokenLogCompl }
-  '+'      { TokenPlus }
-  '-'      { TokenMinus }
   '*'      { TokenMul }
   '/'      { TokenDiv }
+  '+'      { TokenPlus }
+  '-'      { TokenMinus }
+  "<="     { TokenLTE }
+  "<"      { TokenLT }
+  ">="     { TokenGTE }
+  ">"      { TokenGT }
+  "=="     { TokenEQ }
+  "!="     { TokenNEQ }
+  "&&"     { TokenLogAnd }
+  "||"     { TokenLogOr }
   return   { TokenRetKeyword }
   int      { TokenIntKeyword }
   INT      { TokenInt $$ }
   IDENT    { TokenIdent $$ }
 
+%left UNARY
+%left '*' '/'
+%left '+' '-'
+%left "<=" "<" ">=" ">"
+%left "==" "!="
+%left "&&"
+%left "||"
 
 %%
+
 Program : FunctionDecl                               { $1 }
 
 FunctionDecl : int IDENT '(' ')' '{' Statement '}'   { Func $2 [$6] }
 
 Statement : return Expr ';'                          { Return $2 }
 
-Expr : Expr '+' Term                                 { BinaryOp OpAdd $1 $3 }
-     | Expr '-' Term                                 { BinaryOp OpSub $1 $3 }
-     | Term                                          { $1 }
-
-
-Term : Term '*' Factor                               { BinaryOp OpMul $1 $3 }
-     | Term '/' Factor                               { BinaryOp OpDiv $1 $3 }
-     | Factor                                        { $1 }
-
-Factor : '(' Expr ')'                                { $2 }
-       | UnaryOp Factor                              { UnaryOp $1 $2 }
-       | INT                                         { Lit (LInt64 $1) }
+Expr : Expr '+' Expr                                 { BinaryOp OpAdd $1 $3 }
+     | Expr '-' Expr                                 { BinaryOp OpSub $1 $3 }
+     | Expr '*' Expr                                 { BinaryOp OpMul $1 $3 }
+     | Expr '/' Expr                                 { BinaryOp OpDiv $1 $3 }
+     | UnaryOp Expr %prec UNARY                      { UnaryOp $1 $2 }
+     | Expr "<=" Expr                                { BinaryOp OpLTE $1 $3 }
+     | Expr "<" Expr                                 { BinaryOp OpLT $1 $3 }
+     | Expr ">=" Expr                                { BinaryOp OpGTE $1 $3 }
+     | Expr ">" Expr                                 { BinaryOp OpGT $1 $3 }
+     | Expr "==" Expr                                { BinaryOp OpEQ $1 $3 }
+     | Expr "!=" Expr                                { BinaryOp OpNEQ $1 $3 }
+     | Expr "&&" Expr                                { BinaryOp OpLogAnd $1 $3 }
+     | Expr "||" Expr                                { BinaryOp OpLogOr $1 $3 }
+     | '(' Expr ')'                                  { $2 }
+     | INT                                           { LInt64 $1 }
 
 UnaryOp : '~'                                        { OpBitCompl }
         | '!'                                        { OpLogCompl }

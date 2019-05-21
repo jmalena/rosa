@@ -45,7 +45,7 @@ emitStmt (Return expr) =
   emitExpr "rax" expr
 
 emitExpr :: String -> Expr -> Codegen ()
-emitExpr reg (Lit (LInt64 val)) =
+emitExpr reg (LInt64 val) =
   emit 2 $ "movq $" <> show val <> ", %" <> reg
 emitExpr reg (UnaryOp OpBitCompl expr) = do
   emitExpr reg expr
@@ -58,20 +58,68 @@ emitExpr reg (UnaryOp OpLogCompl expr) = do
 emitExpr reg (UnaryOp OpAddCompl expr) = do
   emitExpr reg expr
   emit 2 $ "neg %" <> reg
-emitExpr reg (BinaryOp OpAdd expr1 expr2) = do
-  emitExpr reg expr1
-  emit 2 $ "pushq %" <> reg
-  emitExpr reg expr2
-  emit 2 $ "popq %rcx" -- make %rcx variable
-  emit 2 $ "addq %rcx, %" <> reg -- make %rcx variable
-emitExpr reg (BinaryOp OpSub expr1 expr2) = do
-  emitExpr reg expr1
-  emit 2 $ "pushq %" <> reg
-  emitExpr reg expr2
-  emit 2 $ "popq %rcx" -- make %rcx variable
-  emit 2 $ "subq %" <> reg <> ", %rcx" -- make %rcx variable
-  emit 2 $ "movq %rcx, %" <> reg -- probably inefficient due to this redundant (?) movq
 emitExpr reg (BinaryOp OpMul expr1 expr2) =
   error "64-bit multiplication is not supported yet"
 emitExpr reg (BinaryOp OpDiv expr1 expr2) =
   error "64-bit division is not supported yet"
+emitExpr reg (BinaryOp OpAdd expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx"
+  emit 2 $ "addq %rcx, %" <> reg
+emitExpr reg (BinaryOp OpSub expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx"
+  emit 2 $ "subq %" <> reg <> ", %rcx"
+  emit 2 $ "movq %rcx, %" <> reg
+emitExpr reg (BinaryOp OpEQ expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx"
+  emit 2 $ "cmpq %" <> reg <> ", %rcx"
+  emit 2 $ "movq $0, %" <> reg
+  emit 2 $ "sete %al"
+emitExpr reg (BinaryOp OpNEQ expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx"
+  emit 2 $ "cmpq %" <> reg <> ", %rcx"
+  emit 2 $ "movq $0, %" <> reg
+  emit 2 $ "setne %al"
+emitExpr reg (BinaryOp OpLTE expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx"
+  emit 2 $ "cmpq %" <> reg <> ", %rcx"
+  emit 2 $ "movq $0, %" <> reg
+  emit 2 $ "setle %al"
+emitExpr reg (BinaryOp OpLT expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx"
+  emit 2 $ "cmpq %" <> reg <> ", %rcx"
+  emit 2 $ "movq $0, %" <> reg
+  emit 2 $ "setl %al"
+emitExpr reg (BinaryOp OpGTE expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx"
+  emit 2 $ "cmpq %" <> reg <> ", %rcx"
+  emit 2 $ "movq $0, %" <> reg
+  emit 2 $ "setge %al"
+emitExpr reg (BinaryOp OpGT expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx"
+  emit 2 $ "cmpq %" <> reg <> ", %rcx"
+  emit 2 $ "movq $0, %" <> reg
+  emit 2 $ "setg %al"

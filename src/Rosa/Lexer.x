@@ -21,10 +21,18 @@ tokens :-
   \;                            { \s -> TokenSemi }
   \~                            { \s -> TokenBitCompl }
   \!                            { \s -> TokenLogCompl }
-  \+                            { \s -> TokenPlus }
-  \-                            { \s -> TokenMinus }
   \*                            { \s -> TokenMul }
   \/                            { \s -> TokenDiv }
+  \+                            { \s -> TokenPlus }
+  \-                            { \s -> TokenMinus }
+  "<="                          { \s -> TokenLTE }
+  "<"                           { \s -> TokenLT }
+  ">="                          { \s -> TokenGTE }
+  ">"                           { \s -> TokenGT }
+  "=="                          { \s -> TokenEQ }
+  "!="                          { \s -> TokenNEQ }
+  "&&"                          { \s -> TokenLogAnd }
+  "||"                          { \s -> TokenLogOr }
   "return"                      { \s -> TokenRetKeyword }
   "int"                         { \s -> TokenIntKeyword }
   $digit+                       { \s -> TokenInt (read s) }
@@ -39,10 +47,18 @@ data Token
   | TokenSemi
   | TokenBitCompl
   | TokenLogCompl
-  | TokenPlus
-  | TokenMinus
   | TokenMul
   | TokenDiv
+  | TokenPlus
+  | TokenMinus
+  | TokenLTE
+  | TokenLT
+  | TokenGTE
+  | TokenGT
+  | TokenEQ
+  | TokenNEQ
+  | TokenLogAnd
+  | TokenLogOr
   | TokenRetKeyword
   | TokenIntKeyword
   | TokenInt Int

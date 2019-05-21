@@ -38,26 +38,122 @@ teardown() {
     [ "$status" -eq 223 ]
 }
 
-@test "should sum left associative expression" {
+@test "should sum simple expression" {
+  run $ROSA "igeuwctk.c"
+  run out
+  [ "$status" -eq 5 ]
+}
+
+@test "should sum complex left associative expression" {
     run $ROSA "ovnfmwuv.c"
     run out
     [ "$status" -eq 52 ]
 }
 
-@test "should sum right associative expression" {
+@test "should sum complex right associative expression" {
     run $ROSA "fyikhpak.c"
     run out
     [ "$status" -eq 52 ]
 }
 
-@test "should subtract left associative expression" {
+@test "should subtract simple expression" {
+  run $ROSA "ecjlkevc.c"
+  run out
+  [ "$status" -eq 2 ]
+}
+
+@test "should subtract complex left associative expression" {
     run $ROSA "qgynsxke.c"
     run out
     [ "$status" -eq 16 ]
 }
 
-@test "should subtract right associative expression" {
+@test "should subtract complex right associative expression" {
     run $ROSA "znvgftiv.c"
     run out
     [ "$status" -eq 68 ]
+}
+
+@test "should compare (EQ) true expression" {
+  run $ROSA "ycyuvpsp.c"
+  run out
+  [ "$status" -eq 1 ]
+}
+
+@test "should compare (EQ) false expression" {
+  run $ROSA "enjqmlho.c"
+  run out
+  [ "$status" -eq 0 ]
+}
+
+@test "should compare (NEQ) true expression" {
+  run $ROSA "fglnfnxc.c"
+  run out
+  [ "$status" -eq 1 ]
+}
+
+@test "should compare (NEQ) false expression" {
+  run $ROSA "xdnecxob.c"
+  run out
+  [ "$status" -eq 0 ]
+}
+
+@test "should compare (LTE) true expression [1]" {
+  run $ROSA "thslsbiv.c"
+  run out
+  [ "$status" -eq 1 ]
+}
+
+@test "should compare (LTE) true expression [2]" {
+  run $ROSA "zkrcwezf.c"
+  run out
+  [ "$status" -eq 1 ]
+}
+
+@test "should compare (LTE) false expression" {
+  run $ROSA "mrtvyrkp.c"
+  run out
+  [ "$status" -eq 0 ]
+}
+
+@test "should compare (LT) true expression" {
+  run $ROSA "rtesruzp.c"
+  run out
+  [ "$status" -eq 1 ]
+}
+
+@test "should compare (LT) false expression" {
+  run $ROSA "rciowgcu.c"
+  run out
+  [ "$status" -eq 0 ]
+}
+
+@test "should compare (GTE) true expression [1]" {
+  run $ROSA "jpejgnxc.c"
+  run out
+  [ "$status" -eq 1 ]
+}
+
+@test "should compare (GTE) true expression [2]" {
+  run $ROSA "btldwosp.c"
+  run out
+  [ "$status" -eq 1 ]
+}
+
+@test "should compare (GTE) false expression" {
+  run $ROSA "mxptuztj.c"
+  run out
+  [ "$status" -eq 0 ]
+}
+
+@test "should compare (GT) true expression" {
+  run $ROSA "yumjapwo.c"
+  run out
+  [ "$status" -eq 1 ]
+}
+
+@test "should compare (GT) false expression" {
+  run $ROSA "kkgsvdyy.c"
+  run out
+  [ "$status" -eq 0 ]
 }
