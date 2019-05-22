@@ -11,6 +11,7 @@ import Rosa.AST
 
 data CodegenState = CodegenState
   { asm :: String
+  , labelCounter :: Int
   } deriving (Show)
 
 newtype Codegen a = Codegen { runCodegen' :: State CodegenState a }
@@ -18,12 +19,19 @@ newtype Codegen a = Codegen { runCodegen' :: State CodegenState a }
 
 runCodegen :: Codegen a -> String
 runCodegen = asm . flip execState codegenState . runCodegen'
-  where codegenState = CodegenState { asm = "" }
+  where codegenState = CodegenState { asm = "", labelCounter = 0 }
 
 emit :: Int -> String -> Codegen ()
 emit indent instr = do
   let s = replicate indent ' ' <> instr
   modify $ \rec -> rec { asm = asm rec <> s <> "\n" }
+
+genLabel :: Codegen String
+genLabel = do
+  n <- gets labelCounter
+  let name = "_clause_" <> show n
+  modify $ \rec -> rec { labelCounter = succ n }
+  return name
 
 --------------------------------------------------------------------------------
 
@@ -123,3 +131,30 @@ emitExpr reg (BinaryOp OpGT expr1 expr2) = do
   emit 2 $ "cmpq %" <> reg <> ", %rcx"
   emit 2 $ "movq $0, %" <> reg
   emit 2 $ "setg %al"
+emitExpr reg (BinaryOp OpLogAnd expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "cmpq $0, %" <> reg
+  label1 <- genLabel
+  emit 2 $ "jne " <> label1
+  label2 <- genLabel
+  emit 2 $ "jmp " <> label2
+  emit 0 $ label1 <> ":"
+  emitExpr reg expr2
+  emit 2 $ "cmpq $0, %" <> reg
+  emit 2 $ "movq $0, %" <> reg
+  emit 2 $ "setne %al"
+  emit 0 $ label2 <> ":"
+emitExpr reg (BinaryOp OpLogOr expr1 expr2) = do
+  emitExpr reg expr1
+  emit 2 $ "cmpq $0, %" <> reg
+  label1 <- genLabel
+  emit 2 $ "je " <> label1
+  emit 2 $ "movq $1, %" <> reg
+  label2 <- genLabel
+  emit 2 $ "jmp " <> label2
+  emit 0 $ label1 <> ":"
+  emitExpr reg expr2
+  emit 2 $ "cmpq $0, %" <> reg
+  emit 2 $ "movq $0, %" <> reg
+  emit 2 $ "setne %al"
+  emit 0 $ label2 <> ":"
