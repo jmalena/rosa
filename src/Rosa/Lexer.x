@@ -33,6 +33,7 @@ tokens :-
   "!="                          { \s -> TokenNEQ }
   "&&"                          { \s -> TokenLogAnd }
   "||"                          { \s -> TokenLogOr }
+  \=                            { \s -> TokenAssign }
   "return"                      { \s -> TokenRetKeyword }
   "int"                         { \s -> TokenIntKeyword }
   $digit+                       { \s -> TokenInt (read s) }
@@ -59,6 +60,7 @@ data Token
   | TokenNEQ
   | TokenLogAnd
   | TokenLogOr
+  | TokenAssign
   | TokenRetKeyword
   | TokenIntKeyword
   | TokenInt Int

@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Rosa.Codegen (
   runCodegen,
@@ -7,19 +8,30 @@ module Rosa.Codegen (
 
 import Control.Monad.State
 
+import Data.List
+import qualified Data.Map as Map
+
+import Debug.Trace
+
 import Rosa.AST
 
 data CodegenState = CodegenState
   { asm :: String
   , labelCounter :: Int
+  , scopeStack :: [Scope]
   } deriving (Show)
+
+data Scope = Scope
+  { scopeVariables :: Map.Map String Int
+  , scopeSize :: Int
+  } deriving (Eq, Show)
 
 newtype Codegen a = Codegen { runCodegen' :: State CodegenState a }
   deriving (Functor, Applicative, Monad, MonadState CodegenState)
 
 runCodegen :: Codegen a -> String
 runCodegen = asm . flip execState codegenState . runCodegen'
-  where codegenState = CodegenState { asm = "", labelCounter = 0 }
+  where codegenState = CodegenState { asm = "", labelCounter = 0, scopeStack = [] }
 
 emit :: Int -> String -> Codegen ()
 emit indent instr = do
@@ -33,6 +45,45 @@ genLabel = do
   modify $ \rec -> rec { labelCounter = succ n }
   return name
 
+pushScope :: Codegen ()
+pushScope =
+  modify $ \rec@(CodegenState { scopeStack }) ->
+    rec { scopeStack = (Scope { scopeVariables = Map.empty, scopeSize = 8 }):scopeStack }
+
+popScope :: Codegen ()
+popScope =
+  modify $ \rec@(CodegenState { scopeStack = (_:scopeStack') }) ->
+    rec { scopeStack = scopeStack' }
+
+addScopeVar64 :: String -> Codegen ()
+addScopeVar64 ident =
+  modify $ \rec@(CodegenState { scopeStack = scope@(Scope { scopeVariables, scopeSize }):scopeStack }) ->
+    let
+      scope' = scope { scopeVariables = Map.insert ident scopeSize scopeVariables
+                     , scopeSize = scopeSize+8
+                     }
+    in
+      rec { scopeStack = scope':scopeStack }
+
+findVarsScope :: String -> Codegen (Maybe Scope)
+findVarsScope ident =
+  find (\(Scope { scopeVariables }) -> ident `Map.member` scopeVariables) <$> gets scopeStack
+
+getVarStackPointerOffset :: String -> Codegen Int
+getVarStackPointerOffset ident = do
+  identScopeM <- findVarsScope ident
+  case identScopeM of
+    Nothing -> error $ "Error: Variable " <> ident <> " is not defined"
+    Just identScope@(Scope { scopeVariables }) -> do
+      precedingScopes <- takeWhile (/= identScope) <$> gets scopeStack
+      let skipSize = sum (map scopeSize precedingScopes)
+      let scopeOffset = scopeVariables Map.! ident
+      return $ skipSize + (scopeSize identScope - scopeOffset - 8) -- subtract 8 to skip saved return address
+
+dumpScopes :: Codegen ()
+dumpScopes =
+  gets scopeStack >>= traceShowM
+
 --------------------------------------------------------------------------------
 
 codegen :: Defn -> Codegen ()
@@ -44,11 +95,26 @@ codegen defn = do
 emitDefn :: Defn -> Codegen ()
 emitDefn (Func ident body) = do
   emit 0 $ "_" <> ident <> ":"
+  pushScope
+  emit 2 $ "pushq %rbp"
+  emit 2 $ "movq %rsp, %rbp"
   mapM_ emitStmt body
+  emit 2 $ "movq %rbp, %rsp"
+  emit 2 $ "popq %rbp"
+  popScope
   emit 2 "ret"
   emit 0 ""
 
 emitStmt :: Stmt -> Codegen ()
+emitStmt (Decl ident Nothing) = do
+  emit 2 "pushq $0"
+  addScopeVar64 ident
+emitStmt (Decl ident (Just expr)) = do
+  emitExpr "rax" expr
+  emit 2 "pushq %rax"
+  addScopeVar64 ident
+emitStmt (SideEff expr) =
+  emitExpr "rax" expr
 emitStmt (Return expr) =
   emitExpr "rax" expr
 
@@ -158,3 +224,10 @@ emitExpr reg (BinaryOp OpLogOr expr1 expr2) = do
   emit 2 $ "movq $0, %" <> reg
   emit 2 $ "setne %al"
   emit 0 $ label2 <> ":"
+emitExpr reg (Assign ident expr) = do
+  memoryOffset <- getVarStackPointerOffset ident
+  emitExpr reg expr
+  emit 2 $ "movq %" <> reg <> ", " <> show memoryOffset <> "(%rsp)"
+emitExpr reg (Ref ident) = do
+  memoryOffset <- getVarStackPointerOffset ident
+  emit 2 $ "movq " <> show memoryOffset <> "(%rsp), %" <> reg

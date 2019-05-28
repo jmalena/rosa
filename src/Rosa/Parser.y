@@ -32,6 +32,7 @@ import Rosa.Lexer
   "!="     { TokenNEQ }
   "&&"     { TokenLogAnd }
   "||"     { TokenLogOr }
+  '='      { TokenAssign }
   return   { TokenRetKeyword }
   int      { TokenIntKeyword }
   INT      { TokenInt $$ }
@@ -44,14 +45,21 @@ import Rosa.Lexer
 %left "==" "!="
 %left "&&"
 %left "||"
+%right '='
 
 %%
 
 Program : FunctionDecl                               { $1 }
 
-FunctionDecl : int IDENT '(' ')' '{' Statement '}'   { Func $2 [$6] }
+FunctionDecl : int IDENT '(' ')' '{' Statements '}'   { Func $2 $6 }
 
-Statement : return Expr ';'                          { Return $2 }
+Statements : {- empty -}                             { [] }
+           | Statement Statements                    { $1 : $2 }
+
+Statement : Expr ';'                                 { SideEff $1 }
+          | int IDENT ';'                            { Decl $2 Nothing }
+          | int IDENT '=' Expr ';'                   { Decl $2 (Just $4) }
+          | return Expr ';'                          { Return $2 }
 
 Expr : Expr '+' Expr                                 { BinaryOp OpAdd $1 $3 }
      | Expr '-' Expr                                 { BinaryOp OpSub $1 $3 }
@@ -67,6 +75,8 @@ Expr : Expr '+' Expr                                 { BinaryOp OpAdd $1 $3 }
      | Expr "&&" Expr                                { BinaryOp OpLogAnd $1 $3 }
      | Expr "||" Expr                                { BinaryOp OpLogOr $1 $3 }
      | '(' Expr ')'                                  { $2 }
+     | IDENT '=' Expr                                { Assign $1 $3 }
+     | IDENT                                         { Ref $1 }
      | INT                                           { LInt64 $1 }
 
 UnaryOp : '~'                                        { OpBitCompl }

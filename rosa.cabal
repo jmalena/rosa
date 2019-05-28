@@ -24,6 +24,7 @@ library
   -- other-extensions:
   build-depends:       array >=0.5 && <0.6,
                        base >=4.12 && <4.13,
+                       containers >=0.6 && <0.7,
                        mtl >=2.2 && <2.3
   build-tools:         alex >=3.2 && <3.3,
                        happy >=1.19 && <1.20

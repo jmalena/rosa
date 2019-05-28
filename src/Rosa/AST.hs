@@ -11,11 +11,15 @@ data Defn
   deriving (Eq, Show)
 
 data Stmt
-  = Return Expr
+  = Decl String (Maybe Expr)
+  | SideEff Expr
+  | Return Expr
   deriving (Eq, Show)
 
 data Expr
   = LInt64 Int
+  | Ref String
+  | Assign String Expr
   | UnaryOp UnaryOp Expr
   | BinaryOp BinaryOp Expr Expr
   deriving (Eq, Show)
