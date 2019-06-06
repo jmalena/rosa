@@ -1,5 +1,5 @@
-{ mkDerivation, alex, array, base, containers, happy, mtl
-, optparse-applicative, process, stdenv
+{ mkDerivation, alex, array, base, containers, happy, hspec, mtl
+, optparse-applicative, process, QuickCheck, stdenv
 }:
 mkDerivation {
   pname = "rosa";
@@ -10,5 +10,6 @@ mkDerivation {
   libraryHaskellDepends = [ array base containers mtl ];
   libraryToolDepends = [ alex happy ];
   executableHaskellDepends = [ base optparse-applicative process ];
+  testHaskellDepends = [ base hspec QuickCheck ];
   license = stdenv.lib.licenses.bsd3;
 }

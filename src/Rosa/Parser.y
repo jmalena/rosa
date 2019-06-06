@@ -49,9 +49,9 @@ import Rosa.Lexer
 
 %%
 
-Program : FunctionDecl                               { $1 }
+Program : FunctionDecl                               { [$1] }
 
-FunctionDecl : int IDENT '(' ')' '{' Statements '}'   { Func $2 $6 }
+FunctionDecl : int IDENT '(' ')' '{' Statements '}'  { Func $2 $6 }
 
 Statements : {- empty -}                             { [] }
            | Statement Statements                    { $1 : $2 }
@@ -98,6 +98,6 @@ returnP a = \s l -> Right a
 parseError :: [Token] -> P a
 parseError tok = \s l -> error ("Parse error on line " ++ show l ++ show tok ++ "\n")
 
-parse :: String -> Either String Defn
+parse :: String -> Either String [Defn]
 parse s = expr (tokenize s) "foo" 1
 }

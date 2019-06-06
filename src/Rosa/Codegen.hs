@@ -86,11 +86,11 @@ dumpScopes =
 
 --------------------------------------------------------------------------------
 
-codegen :: Defn -> Codegen ()
-codegen defn = do
+codegen :: [Defn] -> Codegen ()
+codegen defns = do
   emit 0 $ ".global _main"
   emit 0 ""
-  emitDefn defn
+  mapM_ emitDefn defns
 
 emitDefn :: Defn -> Codegen ()
 emitDefn (Func ident body) = do
