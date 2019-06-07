@@ -35,7 +35,7 @@ import Rosa.Lexer
   '='      { TokenAssign }
   return   { TokenRetKeyword }
   int      { TokenIntKeyword }
-  INT      { TokenInt $$ }
+  LIT      { TokenLit $$ }
   IDENT    { TokenIdent $$ }
 
 %left UNARY
@@ -77,7 +77,7 @@ Expr : Expr '+' Expr                                 { BinaryOp OpAdd $1 $3 }
      | '(' Expr ')'                                  { $2 }
      | IDENT '=' Expr                                { Assign $1 $3 }
      | IDENT                                         { Ref $1 }
-     | INT                                           { LInt64 $1 }
+     | LIT                                           { Lit64 $1 }
 
 UnaryOp : '~'                                        { OpBitCompl }
         | '!'                                        { OpLogCompl }

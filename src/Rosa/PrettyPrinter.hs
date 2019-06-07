@@ -62,34 +62,31 @@ printStmt (Return expr) =
   emitLine $ "return " <> showExpr expr <> ";"
 
 showExpr :: Expr -> String
-showExpr (LInt64 num) =
+showExpr (Lit64 num) =
   show num
 showExpr (Ref ident) =
   ident
 showExpr (Assign ident expr) =
   ident <> " = " <> showExpr expr
-showExpr (UnaryOp op expr) = mconcat
-  [ showUnaryOp op
-  , if needsBrackets then "(" else ""
-  , showExpr expr
-  , if needsBrackets then ")" else ""
-  ]
-  where
-    needsBrackets =
-      case expr of
-        BinaryOp _ _ _ -> True
-        _ -> False
+showExpr (UnaryOp op expr) =
+  showUnaryOp op <> showExpr expr
 showExpr (BinaryOp op lexpr rexpr) = mconcat
-  [ showExpr lexpr
-  , " "
+  [ if lNeedsBrackets then "(" else " "
+  , showExpr lexpr
+  , if lNeedsBrackets then ") " else " "
   , showBinaryOp op
   , if rNeedsBrackets then " (" else " "
   , showExpr rexpr
   , if rNeedsBrackets then ")" else ""
   ]
   where
+    lNeedsBrackets =
+      case lexpr of
+        UnaryOp _ _ -> True
+        _ -> False
     rNeedsBrackets =
       case rexpr of
+        UnaryOp _ _ -> True
         BinaryOp _ _ _ -> True
         _ -> False
 

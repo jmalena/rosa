@@ -6,6 +6,8 @@ module Rosa.AST (
   BinaryOp(..)
 ) where
 
+import Data.Word
+
 data Defn
   = Func String [Stmt]
   deriving (Eq, Show)
@@ -17,7 +19,7 @@ data Stmt
   deriving (Eq, Show)
 
 data Expr
-  = LInt64 Int
+  = Lit64 Word64 -- keep only non-negative numbers literals due to double representation of negative numbers: (Lit64 -1) vs. (UnaryOp OpBitCompl (Lit64 1)).
   | Ref String
   | Assign String Expr
   | UnaryOp UnaryOp Expr

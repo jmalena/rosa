@@ -3,6 +3,8 @@ module Rosa.Lexer (
   Token(..),
   tokenize
 ) where
+
+import Data.Word
 }
 
 %wrapper "basic"
@@ -36,7 +38,7 @@ tokens :-
   \=                            { \s -> TokenAssign }
   "return"                      { \s -> TokenRetKeyword }
   "int"                         { \s -> TokenIntKeyword }
-  $digit+                       { \s -> TokenInt (read s) }
+  $digit+                       { \s -> TokenLit (read s) }
   $alpha [$alpha $digit \_]*    { \s -> TokenIdent s }
 
 {
@@ -63,7 +65,7 @@ data Token
   | TokenAssign
   | TokenRetKeyword
   | TokenIntKeyword
-  | TokenInt Int
+  | TokenLit Word64
   | TokenIdent String
   deriving (Eq, Show)
 

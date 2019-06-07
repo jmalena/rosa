@@ -119,7 +119,7 @@ emitStmt (Return expr) =
   emitExpr "rax" expr
 
 emitExpr :: String -> Expr -> Codegen ()
-emitExpr reg (LInt64 val) =
+emitExpr reg (Lit64 val) =
   emit 2 $ "movq $" <> show val <> ", %" <> reg
 emitExpr reg (UnaryOp OpBitCompl expr) = do
   emitExpr reg expr
