@@ -50,6 +50,7 @@ test-suite spec
   main-is:             Spec.hs
   other-modules:       Rosa.ParserSpec
                        Rosa.Parser.Gen
+                       Rosa.PrettyPrinterSpec
   build-depends:       base >=4.12 && <4.13,
                        hspec >=2.7 && <2.8,
                        rosa,

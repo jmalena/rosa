@@ -71,7 +71,7 @@ showExpr (Assign ident expr) =
 showExpr (UnaryOp op expr) =
   showUnaryOp op <> showExpr expr
 showExpr (BinaryOp op lexpr rexpr) = mconcat
-  [ if lNeedsBrackets then "(" else " "
+  [ if lNeedsBrackets then "(" else ""
   , showExpr lexpr
   , if lNeedsBrackets then ") " else " "
   , showBinaryOp op
@@ -81,8 +81,9 @@ showExpr (BinaryOp op lexpr rexpr) = mconcat
   ]
   where
     lNeedsBrackets =
-      case lexpr of
-        UnaryOp _ _ -> True
+      case (op, lexpr) of
+        (_, UnaryOp op' _) -> op `precOver` op'
+        (_, BinaryOp op' _ _) -> op `precOver` op'
         _ -> False
     rNeedsBrackets =
       case rexpr of
