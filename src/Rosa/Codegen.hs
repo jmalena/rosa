@@ -132,24 +132,39 @@ emitExpr reg (UnaryOp OpLogCompl expr) = do
 emitExpr reg (UnaryOp OpAddCompl expr) = do
   emitExpr reg expr
   emit 2 $ "neg %" <> reg
-emitExpr reg (BinaryOp OpMul expr1 expr2) =
-  error "64-bit multiplication is not supported yet"
-emitExpr reg (BinaryOp OpDiv expr1 expr2) =
-  error "64-bit division is not supported yet"
+emitExpr reg (BinaryOp OpMul expr1 expr2) = do
+  emit 2 $ "pushq %rcx"
+  emitExpr reg expr1
+  emit 2 $ "pushq %" <> reg
+  emitExpr reg expr2
+  emit 2 $ "popq %rcx"
+  emit 2 $ "pushq %rdx"
+  emit 2 $ "mulq %rcx" -- modifies %rax (result low) and %rdx (result high)
+  emit 2 $ "popq %rdx"
+  emit 2 $ "popq %rcx"
+{-
+emitExpr reg (BinaryOp OpDiv expr1 expr2) = do
+  see https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf
+-}
 emitExpr reg (BinaryOp OpAdd expr1 expr2) = do
+  emit 2 $ "pushq %rcx"
   emitExpr reg expr1
   emit 2 $ "pushq %" <> reg
   emitExpr reg expr2
   emit 2 $ "popq %rcx"
   emit 2 $ "addq %rcx, %" <> reg
+  emit 2 $ "popq %rcx"
 emitExpr reg (BinaryOp OpSub expr1 expr2) = do
+  emit 2 $ "pushq %rcx"
   emitExpr reg expr1
   emit 2 $ "pushq %" <> reg
   emitExpr reg expr2
   emit 2 $ "popq %rcx"
   emit 2 $ "subq %" <> reg <> ", %rcx"
   emit 2 $ "movq %rcx, %" <> reg
+  emit 2 $ "popq %rcx"
 emitExpr reg (BinaryOp OpEQ expr1 expr2) = do
+  emit 2 $ "pushq %rcx"
   emitExpr reg expr1
   emit 2 $ "pushq %" <> reg
   emitExpr reg expr2
@@ -157,7 +172,9 @@ emitExpr reg (BinaryOp OpEQ expr1 expr2) = do
   emit 2 $ "cmpq %" <> reg <> ", %rcx"
   emit 2 $ "movq $0, %" <> reg
   emit 2 $ "sete %al"
+  emit 2 $ "popq %rcx"
 emitExpr reg (BinaryOp OpNEQ expr1 expr2) = do
+  emit 2 $ "pushq %rcx"
   emitExpr reg expr1
   emit 2 $ "pushq %" <> reg
   emitExpr reg expr2
@@ -165,7 +182,9 @@ emitExpr reg (BinaryOp OpNEQ expr1 expr2) = do
   emit 2 $ "cmpq %" <> reg <> ", %rcx"
   emit 2 $ "movq $0, %" <> reg
   emit 2 $ "setne %al"
+  emit 2 $ "popq %rcx"
 emitExpr reg (BinaryOp OpLTE expr1 expr2) = do
+  emit 2 $ "pushq %rcx"
   emitExpr reg expr1
   emit 2 $ "pushq %" <> reg
   emitExpr reg expr2
@@ -173,7 +192,9 @@ emitExpr reg (BinaryOp OpLTE expr1 expr2) = do
   emit 2 $ "cmpq %" <> reg <> ", %rcx"
   emit 2 $ "movq $0, %" <> reg
   emit 2 $ "setle %al"
+  emit 2 $ "popq %rcx"
 emitExpr reg (BinaryOp OpLT expr1 expr2) = do
+  emit 2 $ "pushq %rcx"
   emitExpr reg expr1
   emit 2 $ "pushq %" <> reg
   emitExpr reg expr2
@@ -181,7 +202,9 @@ emitExpr reg (BinaryOp OpLT expr1 expr2) = do
   emit 2 $ "cmpq %" <> reg <> ", %rcx"
   emit 2 $ "movq $0, %" <> reg
   emit 2 $ "setl %al"
+  emit 2 $ "popq %rcx"
 emitExpr reg (BinaryOp OpGTE expr1 expr2) = do
+  emit 2 $ "pushq %rcx"
   emitExpr reg expr1
   emit 2 $ "pushq %" <> reg
   emitExpr reg expr2
@@ -189,7 +212,9 @@ emitExpr reg (BinaryOp OpGTE expr1 expr2) = do
   emit 2 $ "cmpq %" <> reg <> ", %rcx"
   emit 2 $ "movq $0, %" <> reg
   emit 2 $ "setge %al"
+  emit 2 $ "popq %rcx"
 emitExpr reg (BinaryOp OpGT expr1 expr2) = do
+  emit 2 $ "pushq %rcx"
   emitExpr reg expr1
   emit 2 $ "pushq %" <> reg
   emitExpr reg expr2
@@ -197,6 +222,7 @@ emitExpr reg (BinaryOp OpGT expr1 expr2) = do
   emit 2 $ "cmpq %" <> reg <> ", %rcx"
   emit 2 $ "movq $0, %" <> reg
   emit 2 $ "setg %al"
+  emit 2 $ "popq %rcx"
 emitExpr reg (BinaryOp OpLogAnd expr1 expr2) = do
   emitExpr reg expr1
   emit 2 $ "cmpq $0, %" <> reg
