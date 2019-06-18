@@ -47,17 +47,35 @@ printDefn :: Defn -> Printer ()
 printDefn (Func name body) = do
   emitLine $ "int " <> name <> "() {"
   pushScope
-  mapM_ printStmt body
+  mapM_ printBlockItem body
   popScope
   emitLine "}"
 
-printStmt :: Stmt -> Printer ()
-printStmt (Decl ident Nothing) =
+printBlockItem :: BlockItem -> Printer ()
+printBlockItem (BlockDecl ident Nothing) =
   emitLine $ "int " <> ident <> ";"
-printStmt (Decl ident (Just expr)) =
+printBlockItem (BlockDecl ident (Just expr)) =
   emitLine $ "int " <> ident <> "=" <> showExpr expr <> ";"
+printBlockItem (BlockStmt stmt) =
+  printStmt stmt
+
+printStmt :: Stmt -> Printer ()
 printStmt (SideEff expr) =
   emitLine $ showExpr expr <> ";"
+printStmt (If condExpr thenStmt Nothing) = do
+  emitLine $ "if (" <> showExpr condExpr <> ")"
+  pushScope
+  printStmt thenStmt
+  popScope
+printStmt (If condExpr thenStmt (Just elseStmt)) = do
+  emitLine $ "if (" <> showExpr condExpr <> ")"
+  pushScope
+  printStmt thenStmt
+  popScope
+  emitLine "else"
+  pushScope
+  printStmt elseStmt
+  popScope
 printStmt (Return expr) =
   emitLine $ "return " <> showExpr expr <> ";"
 

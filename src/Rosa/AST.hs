@@ -1,5 +1,6 @@
 module Rosa.AST (
   Defn(..),
+  BlockItem(..),
   Stmt(..),
   Expr(..),
   UnaryOp(..),
@@ -10,12 +11,17 @@ module Rosa.AST (
 import Data.Word
 
 data Defn
-  = Func String [Stmt]
+  = Func String [BlockItem]
+  deriving (Eq, Show)
+
+data BlockItem
+  = BlockDecl String (Maybe Expr)
+  | BlockStmt Stmt
   deriving (Eq, Show)
 
 data Stmt
-  = Decl String (Maybe Expr)
-  | SideEff Expr
+  = SideEff Expr
+  | If Expr Stmt (Maybe Stmt)
   | Return Expr
   deriving (Eq, Show)
 

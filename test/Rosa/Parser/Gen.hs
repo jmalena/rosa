@@ -5,7 +5,7 @@ import Rosa.AST
 import Test.QuickCheck
 import Test.QuickCheck.Gen
 
-genProgram :: Gen [Stmt] -> Gen [Defn]
+genProgram :: Gen [BlockItem] -> Gen [Defn]
 genProgram body =
   (:[]) <$> (Func "main" <$> body)
 

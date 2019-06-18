@@ -36,6 +36,8 @@ tokens :-
   "&&"                          { \s -> TokenLogAnd }
   "||"                          { \s -> TokenLogOr }
   \=                            { \s -> TokenAssign }
+  "if"                          { \s -> TokenIfKeyword }
+  "else"                        { \s -> TokenElseKeyword }
   "return"                      { \s -> TokenRetKeyword }
   "int"                         { \s -> TokenIntKeyword }
   $digit+                       { \s -> TokenLit (read s) }
@@ -63,6 +65,8 @@ data Token
   | TokenLogAnd
   | TokenLogOr
   | TokenAssign
+  | TokenIfKeyword
+  | TokenElseKeyword
   | TokenRetKeyword
   | TokenIntKeyword
   | TokenLit Word64

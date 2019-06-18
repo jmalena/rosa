@@ -20,17 +20,17 @@ spec :: Spec
 spec = do
   describe "Parser" $ do
     prop "should restore generic pretty printed program AST" $
-      forAll (genProgram $ sequence [Return <$> genExpr]) $
+      forAll (genProgram $ sequence [BlockStmt . Return <$> genExpr]) $
       prop_doubleInverse
 
     prop "should restore arithmetic pretty printed program AST" $
-      forAll (genProgram $ sequence [Return <$> genArithOpsExpr64]) $
+      forAll (genProgram $ sequence [BlockStmt . Return <$> genArithOpsExpr64]) $
       prop_doubleInverse
 
     prop "should restore logic pretty printed program AST" $
-      forAll (genProgram $ sequence [Return <$>  genLogicOpsExpr64]) $
+      forAll (genProgram $ sequence [BlockStmt . Return <$> genLogicOpsExpr64]) $
       prop_doubleInverse
 
     prop "should restore bitwise logic pretty printed program AST" $
-      forAll (genProgram $ sequence [Return <$> genBitLogicOpsExpr64]) $
+      forAll (genProgram $ sequence [BlockStmt . Return <$> genBitLogicOpsExpr64]) $
       prop_doubleInverse
