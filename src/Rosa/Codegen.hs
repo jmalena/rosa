@@ -23,7 +23,7 @@ data CodegenState = CodegenState
 
 data Scope = Scope
   { scopeVariables :: Map.Map String Int
-  , scopeSize :: Int
+  , frameSize :: Int
   } deriving (Eq, Show)
 
 newtype Codegen a = Codegen { runCodegen' :: State CodegenState a }
@@ -48,7 +48,7 @@ genLabel = do
 pushScope :: Codegen ()
 pushScope =
   modify $ \rec@(CodegenState { scopeStack }) ->
-    rec { scopeStack = (Scope { scopeVariables = Map.empty, scopeSize = 8 }):scopeStack }
+    rec { scopeStack = (Scope { scopeVariables = Map.empty, frameSize = 0 }):scopeStack }
 
 popScope :: Codegen ()
 popScope =
@@ -57,10 +57,10 @@ popScope =
 
 addScopeVar64 :: String -> Codegen ()
 addScopeVar64 ident =
-  modify $ \rec@(CodegenState { scopeStack = scope@(Scope { scopeVariables, scopeSize }):scopeStack }) ->
+  modify $ \rec@(CodegenState { scopeStack = scope@(Scope { scopeVariables, frameSize }):scopeStack }) ->
     let
-      scope' = scope { scopeVariables = Map.insert ident scopeSize scopeVariables
-                     , scopeSize = scopeSize+8
+      scope' = scope { scopeVariables = Map.insert ident frameSize scopeVariables
+                     , frameSize = frameSize+8
                      }
     in
       rec { scopeStack = scope':scopeStack }
@@ -75,10 +75,10 @@ getVarStackPointerOffset ident = do
   case identScopeM of
     Nothing -> error $ "Error: Variable " <> ident <> " is not defined"
     Just identScope@(Scope { scopeVariables }) -> do
-      precedingScopes <- takeWhile (/= identScope) <$> gets scopeStack
-      let skipSize = sum (map scopeSize precedingScopes)
+      precedingScopes <- tail . dropWhile (/= identScope) <$> gets scopeStack
+      let skipSize = sum (map frameSize precedingScopes)
       let scopeOffset = scopeVariables Map.! ident
-      return $ skipSize + (scopeSize identScope - scopeOffset - 8) -- subtract 8 to skip saved return address
+      return $ -(skipSize + scopeOffset + 8) -- skip 8 for root scope's %rbp
 
 dumpScopes :: Codegen ()
 dumpScopes =
@@ -279,7 +279,7 @@ emitExpr reg (BinaryOp OpLogOr expr1 expr2) = do
 emitExpr reg (Assign ident expr) = do
   memoryOffset <- getVarStackPointerOffset ident
   emitExpr reg expr
-  emit 2 $ "movq %" <> reg <> ", " <> show memoryOffset <> "(%rsp)"
+  emit 2 $ "movq %" <> reg <> ", " <> show memoryOffset <> "(%rbp)"
 emitExpr reg (Ref ident) = do
   memoryOffset <- getVarStackPointerOffset ident
-  emit 2 $ "movq " <> show memoryOffset <> "(%rsp), %" <> reg
+  emit 2 $ "movq " <> show memoryOffset <> "(%rbp), %" <> reg
