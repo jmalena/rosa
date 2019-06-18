@@ -56,16 +56,17 @@ Program : FunctionDecl                               { [$1] }
 
 FunctionDecl : int IDENT '(' ')' '{' Block '}'       { Func $2 $6 }
 
+Block : {- empty -}                                  { [] }
+      | BlockItem Block                              { $1:$2 }
+
 BlockItem : int IDENT ';'                            { BlockDecl $2 Nothing }
           | int IDENT '=' Expr ';'                   { BlockDecl $2 (Just $4) }
           | Statement                                { BlockStmt $1 }
 
-Block : {- empty -}                                  { [] }
-      | BlockItem Block                              { $1:$2 }
-
 Statement : Expr ';'                                 { SideEff $1 }
           | if '(' Expr ')' Statement %prec THEN     { If $3 $5 Nothing }
           | if '(' Expr ')' Statement else Statement { If $3 $5 (Just $7) }
+          | '{' Block '}'                            { Compound $2 }
           | return Expr ';'                          { Return $2 }
 
 Expr : Expr '+' Expr                                 { BinaryOp OpAdd $1 $3 }

@@ -22,6 +22,7 @@ data BlockItem
 data Stmt
   = SideEff Expr
   | If Expr Stmt (Maybe Stmt)
+  | Compound [BlockItem]
   | Return Expr
   deriving (Eq, Show)
 

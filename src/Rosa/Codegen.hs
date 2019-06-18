@@ -50,10 +50,12 @@ pushScope =
   modify $ \rec@(CodegenState { scopeStack }) ->
     rec { scopeStack = (Scope { scopeVariables = Map.empty, frameSize = 0 }):scopeStack }
 
-popScope :: Codegen ()
-popScope =
+popScope :: Codegen Scope
+popScope = do
+  poppedScope <- head <$> gets scopeStack
   modify $ \rec@(CodegenState { scopeStack = (_:scopeStack') }) ->
     rec { scopeStack = scopeStack' }
+  return poppedScope
 
 addScopeVar64 :: String -> Codegen ()
 addScopeVar64 ident =
@@ -141,6 +143,12 @@ emitStmt (If condExpr thenStmt (Just elseStmt)) = do
   emitStmt elseStmt
   emit 0 $ endLabel <> ":"
   -- emit 2 $ "popq %rax"
+emitStmt (Compound stmt) = do
+  pushScope
+  mapM_ emitBlockItem stmt
+  scope <- popScope
+  emit 2 $ "addq $" <> show (frameSize scope) <> ", %rsp" -- stack dealloc
+  return ()
 emitStmt (Return expr) =
   emitExpr "rax" expr
 

@@ -76,6 +76,12 @@ printStmt (If condExpr thenStmt (Just elseStmt)) = do
   pushScope
   printStmt elseStmt
   popScope
+printStmt (Compound stmt) = do
+  emitLine "{"
+  pushScope
+  mapM_ printBlockItem stmt
+  popScope
+  emitLine "}"
 printStmt (Return expr) =
   emitLine $ "return " <> showExpr expr <> ";"
 
