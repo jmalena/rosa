@@ -35,6 +35,11 @@ import Rosa.Lexer
   '='      { TokenAssign }
   if       { TokenIfKeyword }
   else     { TokenElseKeyword }
+  for      { TokenFor }
+  while    { TokenWhile }
+  do       { TokenDo }
+  break    { TokenBreak }
+  continue { TokenContinue }
   return   { TokenRetKeyword }
   int      { TokenIntKeyword }
   LIT      { TokenLit $$ }
@@ -52,42 +57,50 @@ import Rosa.Lexer
 
 %%
 
-Program : FunctionDecl                               { [$1] }
+Program : FunctionDecl                                                           { [$1] }
 
-FunctionDecl : int IDENT '(' ')' '{' Block '}'       { Func $2 $6 }
+FunctionDecl : int IDENT '(' ')' '{' Block '}'                                   { Func $2 $6 }
 
-Block : {- empty -}                                  { [] }
-      | BlockItem Block                              { $1:$2 }
+Block : {- empty -}                                                              { [] }
+      | BlockItem Block                                                          { $1:$2 }
 
-BlockItem : int IDENT ';'                            { BlockDecl $2 Nothing }
-          | int IDENT '=' Expr ';'                   { BlockDecl $2 (Just $4) }
-          | Statement                                { BlockStmt $1 }
+BlockItem : int IDENT ';'                                                        { BlockDecl $2 Nothing }
+          | int IDENT '=' Expr ';'                                               { BlockDecl $2 (Just $4) }
+          | Statement                                                            { BlockStmt $1 }
 
-Statement : Expr ';'                                 { SideEff $1 }
-          | if '(' Expr ')' Statement %prec THEN     { If $3 $5 Nothing }
-          | if '(' Expr ')' Statement else Statement { If $3 $5 (Just $7) }
-          | '{' Block '}'                            { Compound $2 }
-          | return Expr ';'                          { Return $2 }
+Statement : OptionalExpr ';'                                                     { SideEff $1 }
+          | '{' Block '}'                                                        { Compound $2 }
+          | if '(' Expr ')' Statement %prec THEN                                 { If $3 $5 Nothing }
+          | if '(' Expr ')' Statement else Statement                             { If $3 $5 (Just $7) }
+          | for '(' OptionalExpr ';' OptionalExpr ';' OptionalExpr ')' Statement { For $3 $5 $7 $9 }
+          | while '(' Expr ')' Statement                                         { While $3 $5 }
+          | do Statement while '(' Expr ')' ';'                                  { Do $2 $5 }
+          | break ';'                                                            { Break }
+          | continue ';'                                                         { Continue }
+          | return Expr ';'                                                      { Return $2 }
 
-Expr : '-' Expr %prec UNARY_MINUS                    { UnaryOp OpAddCompl $2 }
-     | '!' Expr                                      { UnaryOp OpLogCompl $2 }
-     | '~' Expr                                      { UnaryOp OpBitCompl $2 }
-     | Expr '+' Expr                                 { BinaryOp OpAdd $1 $3 }
-     | Expr '-' Expr                                 { BinaryOp OpSub $1 $3 }
-     | Expr '*' Expr                                 { BinaryOp OpMul $1 $3 }
-     | Expr '/' Expr                                 { BinaryOp OpDiv $1 $3 }
-     | Expr "<=" Expr                                { BinaryOp OpLTE $1 $3 }
-     | Expr "<" Expr                                 { BinaryOp OpLT $1 $3 }
-     | Expr ">=" Expr                                { BinaryOp OpGTE $1 $3 }
-     | Expr ">" Expr                                 { BinaryOp OpGT $1 $3 }
-     | Expr "==" Expr                                { BinaryOp OpEQ $1 $3 }
-     | Expr "!=" Expr                                { BinaryOp OpNEQ $1 $3 }
-     | Expr "&&" Expr                                { BinaryOp OpLogAnd $1 $3 }
-     | Expr "||" Expr                                { BinaryOp OpLogOr $1 $3 }
-     | '(' Expr ')'                                  { $2 }
-     | IDENT '=' Expr                                { Assign $1 $3 }
-     | IDENT                                         { Ref $1 }
-     | LIT                                           { Lit64 $1 }
+OptionalExpr : {- empty -}                                                       { Nothing }
+             | Expr                                                              { Just $1 }
+
+Expr : '-' Expr %prec UNARY_MINUS                                                { UnaryOp OpAddCompl $2 }
+     | '!' Expr                                                                  { UnaryOp OpLogCompl $2 }
+     | '~' Expr                                                                  { UnaryOp OpBitCompl $2 }
+     | Expr '+' Expr                                                             { BinaryOp OpAdd $1 $3 }
+     | Expr '-' Expr                                                             { BinaryOp OpSub $1 $3 }
+     | Expr '*' Expr                                                             { BinaryOp OpMul $1 $3 }
+     | Expr '/' Expr                                                             { BinaryOp OpDiv $1 $3 }
+     | Expr "<=" Expr                                                            { BinaryOp OpLTE $1 $3 }
+     | Expr "<" Expr                                                             { BinaryOp OpLT $1 $3 }
+     | Expr ">=" Expr                                                            { BinaryOp OpGTE $1 $3 }
+     | Expr ">" Expr                                                             { BinaryOp OpGT $1 $3 }
+     | Expr "==" Expr                                                            { BinaryOp OpEQ $1 $3 }
+     | Expr "!=" Expr                                                            { BinaryOp OpNEQ $1 $3 }
+     | Expr "&&" Expr                                                            { BinaryOp OpLogAnd $1 $3 }
+     | Expr "||" Expr                                                            { BinaryOp OpLogOr $1 $3 }
+     | '(' Expr ')'                                                              { $2 }
+     | IDENT '=' Expr                                                            { Assign $1 $3 }
+     | IDENT                                                                     { Ref $1 }
+     | LIT                                                                       { Lit64 $1 }
 
 {
 type P a = String -> Int -> Either String a

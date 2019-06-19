@@ -20,9 +20,14 @@ data BlockItem
   deriving (Eq, Show)
 
 data Stmt
-  = SideEff Expr
+  = SideEff (Maybe Expr)
   | If Expr Stmt (Maybe Stmt)
   | Compound [BlockItem]
+  | For (Maybe Expr) (Maybe Expr) (Maybe Expr) Stmt
+  | While Expr Stmt
+  | Do Stmt Expr
+  | Break
+  | Continue
   | Return Expr
   deriving (Eq, Show)
 

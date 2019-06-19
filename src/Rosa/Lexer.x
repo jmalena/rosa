@@ -38,6 +38,11 @@ tokens :-
   \=                            { \s -> TokenAssign }
   "if"                          { \s -> TokenIfKeyword }
   "else"                        { \s -> TokenElseKeyword }
+  "for"                         { \s -> TokenFor }
+  "while"                       { \s -> TokenWhile }
+  "do"                          { \s -> TokenDo }
+  "break"                       { \s -> TokenBreak }
+  "continue"                    { \s -> TokenContinue }
   "return"                      { \s -> TokenRetKeyword }
   "int"                         { \s -> TokenIntKeyword }
   $digit+                       { \s -> TokenLit (read s) }
@@ -67,6 +72,11 @@ data Token
   | TokenAssign
   | TokenIfKeyword
   | TokenElseKeyword
+  | TokenFor
+  | TokenWhile
+  | TokenDo
+  | TokenBreak
+  | TokenContinue
   | TokenRetKeyword
   | TokenIntKeyword
   | TokenLit Word64

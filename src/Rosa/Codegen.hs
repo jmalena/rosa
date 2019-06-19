@@ -119,8 +119,16 @@ emitBlockItem (BlockStmt stmt) =
   emitStmt stmt
 
 emitStmt :: Stmt -> Codegen ()
-emitStmt (SideEff expr) =
+emitStmt (SideEff Nothing) =
+  return ()
+emitStmt (SideEff (Just expr)) =
   emitExpr "rax" expr
+emitStmt (Compound stmt) = do
+  pushScope
+  mapM_ emitBlockItem stmt
+  scope <- popScope
+  emit 2 $ "addq $" <> show (frameSize scope) <> ", %rsp" -- stack dealloc
+  return ()
 emitStmt (If condExpr thenStmt Nothing) = do
   endLabel <- genLabel
   -- emit 2 $ "pushq %rax"
@@ -143,12 +151,43 @@ emitStmt (If condExpr thenStmt (Just elseStmt)) = do
   emitStmt elseStmt
   emit 0 $ endLabel <> ":"
   -- emit 2 $ "popq %rax"
-emitStmt (Compound stmt) = do
-  pushScope
-  mapM_ emitBlockItem stmt
-  scope <- popScope
-  emit 2 $ "addq $" <> show (frameSize scope) <> ", %rsp" -- stack dealloc
-  return ()
+emitStmt (For preExprMaybe condExprMaybe postExprMaybe bodyStmt) = do
+  loopLabel <- genLabel
+  endLabel <- genLabel
+  mapM_ (emitExpr "rax") preExprMaybe
+  emit 0 $ loopLabel <> ":"
+  forM_ condExprMaybe $ \condExpr -> do
+    emitExpr "rax" condExpr
+    emit 2 $ "cmpq $0, %rax"
+    emit 2 $ "je " <> endLabel
+  emitStmt bodyStmt
+  mapM_ (emitExpr "rax") postExprMaybe
+  emit 2 $ "jmp " <> loopLabel
+  emit 0 $ endLabel <> ":"
+emitStmt (While condExpr bodyStmt) = do
+  loopLabel <- genLabel
+  endLabel <- genLabel
+  emit 0 $ loopLabel <> ":"
+  emitExpr "rax" condExpr
+  emit 2 $ "cmpq $0, %rax"
+  emit 2 $ "je " <> endLabel
+  emitStmt bodyStmt
+  emit 2 $ "jmp " <> loopLabel
+  emit 0 $ endLabel <> ":"
+emitStmt (Do bodyStmt condExpr) = do
+  loopLabel <- genLabel
+  endLabel <- genLabel
+  emit 0 $ loopLabel <> ":"
+  emitStmt bodyStmt
+  emitExpr "rax" condExpr
+  emit 2 $ "cmpq $0, %rax"
+  emit 2 $ "je " <> endLabel
+  emit 2 $ "jmp " <> loopLabel
+  emit 0 $ endLabel <> ":"
+emitStmt Break =
+  error "\"break\" statement is not implemented yet."
+emitStmt Continue =
+  error "\"continue\" statement is not implemented yet."
 emitStmt (Return expr) =
   emitExpr "rax" expr
 
@@ -176,10 +215,9 @@ emitExpr reg (BinaryOp OpMul expr1 expr2) = do
   emit 2 $ "mulq %rcx" -- modifies %rax (result low) and %rdx (result high)
   emit 2 $ "popq %rdx"
   -- emit 2 $ "popq %rcx"
-{-
+{- see https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf -}
 emitExpr reg (BinaryOp OpDiv expr1 expr2) = do
-  see https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf
--}
+  error "64-bit division is not implemented yet."
 emitExpr reg (BinaryOp OpAdd expr1 expr2) = do
   -- emit 2 $ "pushq %rcx"
   emitExpr reg expr1

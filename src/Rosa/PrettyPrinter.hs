@@ -60,8 +60,16 @@ printBlockItem (BlockStmt stmt) =
   printStmt stmt
 
 printStmt :: Stmt -> Printer ()
-printStmt (SideEff expr) =
+printStmt (SideEff Nothing) =
+  emitLine ";"
+printStmt (SideEff (Just expr)) =
   emitLine $ showExpr expr <> ";"
+printStmt (Compound stmt) = do
+  emitLine "{"
+  pushScope
+  mapM_ printBlockItem stmt
+  popScope
+  emitLine "}"
 printStmt (If condExpr thenStmt Nothing) = do
   emitLine $ "if (" <> showExpr condExpr <> ")"
   pushScope
@@ -76,12 +84,27 @@ printStmt (If condExpr thenStmt (Just elseStmt)) = do
   pushScope
   printStmt elseStmt
   popScope
-printStmt (Compound stmt) = do
-  emitLine "{"
-  pushScope
-  mapM_ printBlockItem stmt
-  popScope
-  emitLine "}"
+printStmt (For preExprMaybe condExprMaybe postExprMaybe bodyStmt) = do
+  emitLine $ mconcat
+    [ "for ("
+    , maybe "" (\preExpr -> showExpr preExpr <> " ") preExprMaybe
+    , ";"
+    , maybe "" (\condExpr -> showExpr condExpr <> " ") condExprMaybe
+    , ";"
+    , maybe "" (\postExpr -> showExpr postExpr <> " ") postExprMaybe
+    ]
+  printStmt bodyStmt
+printStmt (While condExpr bodyStmt) = do
+  emitLine $ "while (" <> showExpr condExpr <> ")"
+  printStmt bodyStmt
+printStmt (Do bodyStmt condExpr) = do
+  emitLine "do"
+  printStmt bodyStmt
+  emitLine $ "while (" <> showExpr condExpr <> ")"
+printStmt Break =
+  emitLine "break;"
+printStmt Continue =
+  emitLine "continue;"
 printStmt (Return expr) =
   emitLine $ "return " <> showExpr expr <> ";"
 
