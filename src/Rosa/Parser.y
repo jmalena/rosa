@@ -40,15 +40,15 @@ import Rosa.Lexer
   LIT      { TokenLit $$ }
   IDENT    { TokenIdent $$ }
 
-%right THEN else -- see https://stackoverflow.com/questions/12731922/reforming-the-grammar-to-remove-shift-reduce-conflict-in-if-then-else
-%left UNARY
-%left '*' '/'
-%left '+' '-'
-%left "<=" "<" ">=" ">"
-%left "==" "!="
-%left "&&"
-%left "||"
 %right '='
+%left "||"
+%left "&&"
+%left "==" "!="
+%left "<=" "<" ">=" ">"
+%left '+' '-'
+%left '*' '/'
+%right UNARY_MINUS '!' '~'
+%right THEN else -- see https://stackoverflow.com/questions/12731922/reforming-the-grammar-to-remove-shift-reduce-conflict-in-if-then-else
 
 %%
 
@@ -69,11 +69,13 @@ Statement : Expr ';'                                 { SideEff $1 }
           | '{' Block '}'                            { Compound $2 }
           | return Expr ';'                          { Return $2 }
 
-Expr : Expr '+' Expr                                 { BinaryOp OpAdd $1 $3 }
+Expr : '-' Expr %prec UNARY_MINUS                    { UnaryOp OpAddCompl $2 }
+     | '!' Expr                                      { UnaryOp OpLogCompl $2 }
+     | '~' Expr                                      { UnaryOp OpBitCompl $2 }
+     | Expr '+' Expr                                 { BinaryOp OpAdd $1 $3 }
      | Expr '-' Expr                                 { BinaryOp OpSub $1 $3 }
      | Expr '*' Expr                                 { BinaryOp OpMul $1 $3 }
      | Expr '/' Expr                                 { BinaryOp OpDiv $1 $3 }
-     | UnaryOp Expr %prec UNARY                      { UnaryOp $1 $2 }
      | Expr "<=" Expr                                { BinaryOp OpLTE $1 $3 }
      | Expr "<" Expr                                 { BinaryOp OpLT $1 $3 }
      | Expr ">=" Expr                                { BinaryOp OpGTE $1 $3 }
@@ -86,10 +88,6 @@ Expr : Expr '+' Expr                                 { BinaryOp OpAdd $1 $3 }
      | IDENT '=' Expr                                { Assign $1 $3 }
      | IDENT                                         { Ref $1 }
      | LIT                                           { Lit64 $1 }
-
-UnaryOp : '~'                                        { OpBitCompl }
-        | '!'                                        { OpLogCompl }
-        | '-'                                        { OpAddCompl }
 
 {
 type P a = String -> Int -> Either String a
