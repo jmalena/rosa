@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Rosa.Codegen (
@@ -8,83 +9,79 @@ module Rosa.Codegen (
 
 import Control.Monad.State
 
+import Data.Int
 import Data.List
-import qualified Data.Map as Map
-
-import Debug.Trace
+import Data.Maybe
 
 import Rosa.AST
+import qualified Rosa.Codegen.Frame as Frame
 
 data CodegenState = CodegenState
   { asm :: String
   , labelCounter :: Int
-  , scopeStack :: [Scope]
+  , frameStack :: [Frame.Frame]
   } deriving (Show)
-
-data Scope = Scope
-  { scopeVariables :: Map.Map String Int
-  , frameSize :: Int
-  } deriving (Eq, Show)
 
 newtype Codegen a = Codegen { runCodegen' :: State CodegenState a }
   deriving (Functor, Applicative, Monad, MonadState CodegenState)
 
 runCodegen :: Codegen a -> String
 runCodegen = asm . flip execState codegenState . runCodegen'
-  where codegenState = CodegenState { asm = "", labelCounter = 0, scopeStack = [] }
+  where codegenState = CodegenState { asm = "", labelCounter = 0, frameStack = [] }
 
 emit :: Int -> String -> Codegen ()
-emit indent instr = do
-  let s = replicate indent ' ' <> instr
-  modify $ \rec -> rec { asm = asm rec <> s <> "\n" }
+emit indent instr =
+  modify $ \s -> s { asm = asm s <> str <> "\n" }
+  where str = replicate indent ' ' <> instr
 
 genLabel :: Codegen String
 genLabel = do
   n <- gets labelCounter
-  let name = "_clause_" <> show n
-  modify $ \rec -> rec { labelCounter = succ n }
-  return name
+  modify $ \s -> s { labelCounter = succ n }
+  return $ "label_" <> show n
 
-pushScope :: Codegen ()
-pushScope =
-  modify $ \rec@(CodegenState { scopeStack }) ->
-    rec { scopeStack = (Scope { scopeVariables = Map.empty, frameSize = 0 }):scopeStack }
+pushFrame :: Frame.Frame -> Codegen ()
+pushFrame frame =
+  modify $ \s -> s { frameStack = frame:(frameStack s) }
 
-popScope :: Codegen Scope
-popScope = do
-  poppedScope <- head <$> gets scopeStack
-  modify $ \rec@(CodegenState { scopeStack = (_:scopeStack') }) ->
-    rec { scopeStack = scopeStack' }
-  return poppedScope
+{-
+getCurrentFrame :: Codegen Frame.Frame
+getCurrentFrame =
+  gets (head . frameStack)
+-}
 
-addScopeVar64 :: String -> Codegen ()
-addScopeVar64 ident =
-  modify $ \rec@(CodegenState { scopeStack = scope@(Scope { scopeVariables, frameSize }):scopeStack }) ->
-    let
-      scope' = scope { scopeVariables = Map.insert ident frameSize scopeVariables
-                     , frameSize = frameSize+8
-                     }
-    in
-      rec { scopeStack = scope':scopeStack }
+modifyCurrentFrame :: (Frame.Frame -> Frame.Frame) -> Codegen ()
+modifyCurrentFrame f =
+  modify $ \s@(CodegenState { frameStack = frame:frameStack' }) ->
+    s { frameStack = (f frame):frameStack' }
 
-findVarsScope :: String -> Codegen (Maybe Scope)
-findVarsScope ident =
-  find (\(Scope { scopeVariables }) -> ident `Map.member` scopeVariables) <$> gets scopeStack
+stateCurrentFrame :: (Frame.Frame -> (a, Frame.Frame)) -> Codegen a
+stateCurrentFrame f =
+  state $ \s@(CodegenState { frameStack = frame:frameStack' }) ->
+    (\nextFrame -> s { frameStack = nextFrame:frameStack' }) <$> f frame
 
-getVarStackPointerOffset :: String -> Codegen Int
-getVarStackPointerOffset ident = do
-  identScopeM <- findVarsScope ident
-  case identScopeM of
-    Nothing -> error $ "Error: Variable " <> ident <> " is not defined"
-    Just identScope@(Scope { scopeVariables }) -> do
-      precedingScopes <- tail . dropWhile (/= identScope) <$> gets scopeStack
-      let skipSize = sum (map frameSize precedingScopes)
-      let scopeOffset = scopeVariables Map.! ident
-      return $ -(skipSize + scopeOffset + 8) -- skip 8 for root scope's %rbp
+findFrameByVar :: String -> Codegen (Maybe Frame.Frame)
+findFrameByVar ident =
+  find (\frame -> isJust $ Frame.findVarOffset ident frame) <$> gets frameStack
 
-dumpScopes :: Codegen ()
-dumpScopes =
-  gets scopeStack >>= traceShowM
+popFrame :: Codegen Frame.Frame
+popFrame =
+  state $ \s@(CodegenState { frameStack = frame:nextFrameStack }) ->
+    ( frame
+    , s { frameStack = nextFrameStack }
+    )
+
+getPrecedingFrames :: Frame.Frame -> Codegen [Frame.Frame]
+getPrecedingFrames frame =
+  tail . dropWhile (/= frame) <$> gets frameStack
+
+findVarOffset :: String -> Codegen (Maybe Int64)
+findVarOffset ident = do
+  frameMaybe <- findFrameByVar ident
+  forM frameMaybe $ \frame -> do
+    let frameOffset = fromJust $ Frame.findVarOffset ident frame
+    skipSize <- sum . map Frame.size <$> getPrecedingFrames frame
+    return $ -(skipSize + frameOffset)
 
 --------------------------------------------------------------------------------
 
@@ -97,37 +94,40 @@ codegen defns = do
 emitDefn :: Defn -> Codegen ()
 emitDefn (Func ident body) = do
   emit 0 $ "_" <> ident <> ":"
-  pushScope
+  pushFrame Frame.empty
+  stateCurrentFrame Frame.alloc64
   emit 2 $ "pushq %rbp"
   emit 2 $ "movq %rsp, %rbp"
   mapM_ emitBlockItem body
   emit 2 $ "movq %rbp, %rsp"
   emit 2 $ "popq %rbp"
-  popScope
+  modifyCurrentFrame Frame.dealloc64
+  popFrame
   emit 2 "ret"
   emit 0 ""
 
 emitBlockItem :: BlockItem -> Codegen ()
-emitBlockItem (BlockDecl ident Nothing) = do
-  emit 2 "pushq $0"
-  addScopeVar64 ident
-emitBlockItem (BlockDecl ident (Just expr)) = do
-  emitExpr "rax" expr
-  emit 2 "pushq %rax"
-  addScopeVar64 ident
+emitBlockItem (BlockDecl ident maybeExpr) = do
+  offset <- stateCurrentFrame Frame.alloc64
+  modifyCurrentFrame $ Frame.markVar ident offset
+  case maybeExpr of
+    Nothing ->
+      emit 2 "pushq $0"
+    Just expr -> do
+      emitExpr "rax" expr
+      emit 2 "pushq %rax"
 emitBlockItem (BlockStmt stmt) =
   emitStmt stmt
 
 emitStmt :: Stmt -> Codegen ()
-emitStmt (SideEff Nothing) =
-  return ()
-emitStmt (SideEff (Just expr)) =
-  emitExpr "rax" expr
+emitStmt (SideEff maybeExpr) =
+  forM_ maybeExpr $ \expr ->
+    emitExpr "rax" expr
 emitStmt (Compound stmt) = do
-  pushScope
+  pushFrame Frame.empty
   mapM_ emitBlockItem stmt
-  scope <- popScope
-  emit 2 $ "addq $" <> show (frameSize scope) <> ", %rsp" -- stack dealloc
+  frame <- popFrame
+  emit 2 $ "addq $" <> show (Frame.size frame) <> ", %rsp" -- stack dealloc
   return ()
 emitStmt (If condExpr thenStmt Nothing) = do
   endLabel <- genLabel
@@ -322,10 +322,16 @@ emitExpr reg (BinaryOp OpLogOr expr1 expr2) = do
   emit 2 $ "movq $0, %" <> reg
   emit 2 $ "setne %al"
   emit 0 $ label2 <> ":"
-emitExpr reg (Assign ident expr) = do
-  memoryOffset <- getVarStackPointerOffset ident
-  emitExpr reg expr
-  emit 2 $ "movq %" <> reg <> ", " <> show memoryOffset <> "(%rbp)"
-emitExpr reg (Ref ident) = do
-  memoryOffset <- getVarStackPointerOffset ident
-  emit 2 $ "movq " <> show memoryOffset <> "(%rbp), %" <> reg
+emitExpr reg (Assign ident expr) =
+  findVarOffset ident >>= \case
+    Nothing ->
+      error $ "Error: unable to assign value to undefined variable \"" <> ident <> "\"."
+    Just memOffset -> do
+      emitExpr reg expr
+      emit 2 $ "movq %" <> reg <> ", " <> show memOffset <> "(%rbp)"
+emitExpr reg (Ref ident) =
+  findVarOffset ident >>= \case
+    Nothing ->
+      error $ "Error: unable to reference undefined variable \"" <> ident <> "\"."
+    Just memOffset ->
+      emit 2 $ "movq " <> show memOffset <> "(%rbp), %" <> reg

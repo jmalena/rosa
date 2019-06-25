@@ -23,6 +23,7 @@ library
                        Rosa.PrettyPrinter
                        --
   other-modules:       Rosa.Codegen
+                       Rosa.Codegen.Frame
                        Rosa.Lexer
   -- other-extensions:
   build-depends:       array >=0.5 && <0.6,
