@@ -11,15 +11,19 @@ import Control.Monad.State
 
 import Data.Int
 import Data.List
+import qualified Data.Map as Map
 import Data.Maybe
 
 import Rosa.AST
 import qualified Rosa.Codegen.Frame as Frame
 
+import Debug.Trace
+
 data CodegenState = CodegenState
   { asm :: String
-  , labelCounter :: Int
+  , functionSignatures :: Map.Map String [String]
   , frameStack :: [Frame.Frame]
+  , labelCounter :: Int
   } deriving (Show)
 
 newtype Codegen a = Codegen { runCodegen' :: State CodegenState a }
@@ -27,7 +31,10 @@ newtype Codegen a = Codegen { runCodegen' :: State CodegenState a }
 
 runCodegen :: Codegen a -> String
 runCodegen = asm . flip execState codegenState . runCodegen'
-  where codegenState = CodegenState { asm = "", labelCounter = 0, frameStack = [] }
+  where codegenState = CodegenState { asm = "", functionSignatures = Map.empty, frameStack = [], labelCounter = 0 }
+
+--------------------------------------------------------------------------------
+-- | Code emitting
 
 emit :: Int -> String -> Codegen ()
 emit indent instr =
@@ -39,6 +46,20 @@ genLabel = do
   n <- gets labelCounter
   modify $ \s -> s { labelCounter = succ n }
   return $ "label_" <> show n
+
+--------------------------------------------------------------------------------
+-- | Function handling
+
+introduceFunction :: String -> [String] -> Codegen ()
+introduceFunction ident params =
+  modify $ \s -> s { functionSignatures = Map.insert ident params (functionSignatures s) }
+
+findFunctionSignature :: String -> Codegen (Maybe [String])
+findFunctionSignature ident =
+  Map.lookup ident <$> gets functionSignatures
+
+--------------------------------------------------------------------------------
+-- | Frame handling
 
 pushFrame :: Frame.Frame -> Codegen ()
 pushFrame frame =
@@ -81,8 +102,9 @@ findVarOffset ident = do
   forM frameMaybe $ \frame -> do
     let frameOffset = fromJust $ Frame.findVarOffset ident frame
     skipSize <- sum . map Frame.size <$> getPrecedingFrames frame
-    return $ -(skipSize + frameOffset)
+    return $ -skipSize + frameOffset
 
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 codegen :: [Defn] -> Codegen ()
@@ -92,19 +114,32 @@ codegen defns = do
   mapM_ emitDefn defns
 
 emitDefn :: Defn -> Codegen ()
-emitDefn (Func ident body) = do
-  emit 0 $ "_" <> ident <> ":"
-  pushFrame Frame.empty
-  stateCurrentFrame Frame.alloc64
-  emit 2 $ "pushq %rbp"
-  emit 2 $ "movq %rsp, %rbp"
-  mapM_ emitBlockItem body
-  emit 2 $ "movq %rbp, %rsp"
-  emit 2 $ "popq %rbp"
-  modifyCurrentFrame Frame.dealloc64
-  popFrame
-  emit 2 "ret"
-  emit 0 ""
+emitDefn (FuncDecl ident params Nothing) =
+  findFunctionSignature ident >>= \case
+    Just _ ->
+      error $ "Error: function \"" <> ident <> "\" is already defined."
+    Nothing ->
+      introduceFunction ident params
+emitDefn (FuncDecl ident params (Just body)) =
+  findFunctionSignature ident >>= \case
+    Just _ ->
+      error $ "Error: function \"" <> ident <> "\" is already defined."
+    Nothing -> do
+      emit 0 $ "_" <> ident <> ":"
+      pushFrame Frame.empty
+      introduceFunction ident params
+      forM_ (zip [0,8..] params) $ \(offset, varIdent) -> -- insert phantom function argument offsets
+        modifyCurrentFrame $ Frame.markVar varIdent (offset + 16) -- skip saved return address (wtf, why not `+ 8`?!)
+      stateCurrentFrame Frame.alloc64 -- alloc for old %rbp value
+      emit 2 $ "pushq %rbp"
+      emit 2 $ "movq %rsp, %rbp"
+      mapM_ emitBlockItem body
+      emit 2 $ "movq %rbp, %rsp"
+      emit 2 $ "popq %rbp"
+      modifyCurrentFrame Frame.dealloc64
+      popFrame
+      emit 2 "retq"
+      emit 0 ""
 
 emitBlockItem :: BlockItem -> Codegen ()
 emitBlockItem (BlockDecl ident maybeExpr) = do
@@ -194,6 +229,22 @@ emitStmt (Return expr) =
 emitExpr :: String -> Expr -> Codegen ()
 emitExpr reg (Lit64 val) =
   emit 2 $ "movq $" <> show val <> ", %" <> reg
+emitExpr reg (FuncCall ident args) =
+  findFunctionSignature ident >>= \case
+    Nothing ->
+      error $ "Error: unable to call undefined function \"" <> ident <> "\"."
+    Just sig -> do
+      when (length sig /= length args) $
+        error $ "Error: function \"" <> ident <> "\" expect " <> show (length sig) <> " arguments, but " <> show (length args) <> " was given."
+      let argsStackSize = 8 * length sig
+      forM_ (reverse args) $ \argExpr -> do
+        stateCurrentFrame Frame.alloc64
+        emitExpr reg argExpr
+        emit 2 $ "pushq %" <> reg
+      emit 2 $ "callq _" <> ident
+      replicateM_ (length sig) $ -- dealloc
+        modifyCurrentFrame Frame.dealloc64
+      emit 2 $ "addq $" <> show argsStackSize <> ", %rsp"
 emitExpr reg (UnaryOp OpBitCompl expr) = do
   emitExpr reg expr
   emit 2 $ "not %" <> reg

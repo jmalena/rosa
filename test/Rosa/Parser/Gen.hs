@@ -7,7 +7,7 @@ import Test.QuickCheck.Gen
 
 genProgram :: Gen [BlockItem] -> Gen [Defn]
 genProgram body =
-  (:[]) <$> (Func "main" <$> body)
+  (:[]) <$> (FuncDecl "main" [] . Just <$> body)
 
 genExpr :: Gen Expr
 genExpr = oneof

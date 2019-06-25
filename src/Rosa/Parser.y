@@ -44,7 +44,9 @@ import Rosa.Lexer
   int      { TokenIntKeyword }
   LIT      { TokenLit $$ }
   IDENT    { TokenIdent $$ }
+  ','      { TokenComma }
 
+%left ','
 %right '='
 %left "||"
 %left "&&"
@@ -52,14 +54,22 @@ import Rosa.Lexer
 %left "<=" "<" ">=" ">"
 %left '+' '-'
 %left '*' '/'
-%right UNARY_MINUS '!' '~'
-%right THEN else -- see https://stackoverflow.com/questions/12731922/reforming-the-grammar-to-remove-shift-reduce-conflict-in-if-then-else
+%right UNARY_MINUS '!' '~' FUNC_CALL
+%nonassoc THEN
+%nonassoc else
 
 %%
 
-Program : FunctionDecl                                                           { [$1] }
+Program : {- -}                                                                  { [] }
+        | FuncDecl                                                               { [$1] }
+        | FuncDecl Program                                                       { $1:$2 }
 
-FunctionDecl : int IDENT '(' ')' '{' Block '}'                                   { Func $2 $6 }
+FuncDecl : int IDENT '(' FuncDeclParams ')' ';'                                  { FuncDecl $2 $4 Nothing }
+         | int IDENT '(' FuncDeclParams ')' '{' Block '}'                        { FuncDecl $2 $4 (Just $7) }
+
+FuncDeclParams : {- -}                                                           { [] }
+               | int IDENT                                                       { [$2] }
+               | int IDENT ',' FuncDeclParams                                    { $2:$4 }
 
 Block : {- empty -}                                                              { [] }
       | BlockItem Block                                                          { $1:$2 }
@@ -82,7 +92,12 @@ Statement : OptionalExpr ';'                                                    
 OptionalExpr : {- empty -}                                                       { Nothing }
              | Expr                                                              { Just $1 }
 
-Expr : '-' Expr %prec UNARY_MINUS                                                { UnaryOp OpAddCompl $2 }
+FuncCallArgs : {- -}                                                             { [] }
+             | Expr                                                              { [$1] }
+             | Expr ',' FuncCallArgs                                             { $1:$3 }
+
+Expr : IDENT '(' FuncCallArgs ')' %prec FUNC_CALL                                { FuncCall $1 $3 }
+     | '-' Expr %prec UNARY_MINUS                                                { UnaryOp OpAddCompl $2 }
      | '!' Expr                                                                  { UnaryOp OpLogCompl $2 }
      | '~' Expr                                                                  { UnaryOp OpBitCompl $2 }
      | Expr '+' Expr                                                             { BinaryOp OpAdd $1 $3 }

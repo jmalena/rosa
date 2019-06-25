@@ -11,7 +11,7 @@ module Rosa.AST (
 import Data.Word
 
 data Defn
-  = Func String [BlockItem]
+  = FuncDecl String [String] (Maybe [BlockItem])
   deriving (Eq, Show)
 
 data BlockItem
@@ -21,8 +21,8 @@ data BlockItem
 
 data Stmt
   = SideEff (Maybe Expr)
-  | If Expr Stmt (Maybe Stmt)
   | Compound [BlockItem]
+  | If Expr Stmt (Maybe Stmt)
   | For (Maybe Expr) (Maybe Expr) (Maybe Expr) Stmt
   | While Expr Stmt
   | Do Stmt Expr
@@ -35,6 +35,7 @@ data Expr
   = Lit64 Word64 -- keep only non-negative numbers literals due to double representation of negative numbers: (Lit64 -1) vs. (UnaryOp OpBitCompl (Lit64 1)).
   | Ref String
   | Assign String Expr
+  | FuncCall String [Expr]
   | UnaryOp UnaryOp Expr
   | BinaryOp BinaryOp Expr Expr
   deriving (Eq, Show)

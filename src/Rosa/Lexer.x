@@ -47,6 +47,7 @@ tokens :-
   "int"                         { \s -> TokenIntKeyword }
   $digit+                       { \s -> TokenLit (read s) }
   $alpha [$alpha $digit \_]*    { \s -> TokenIdent s }
+  \,                            { \s -> TokenComma }
 
 {
 data Token
@@ -81,6 +82,7 @@ data Token
   | TokenIntKeyword
   | TokenLit Word64
   | TokenIdent String
+  | TokenComma
   deriving (Eq, Show)
 
 tokenize :: String -> [Token]

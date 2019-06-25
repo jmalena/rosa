@@ -22,7 +22,7 @@ empty = Frame
 
 alloc64 :: Frame -> (Int64, Frame)
 alloc64 frame =
-  ( size frame
+  ( -(size frame)
   , frame { size = (size frame) + 8 }
   )
 

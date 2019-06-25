@@ -44,7 +44,9 @@ printDefns defns =
     emitLine ""
 
 printDefn :: Defn -> Printer ()
-printDefn (Func name body) = do
+printDefn (FuncDecl name _ Nothing) =
+  emitLine $ "int " <> name <> "();"
+printDefn (FuncDecl name _ (Just body)) = do
   emitLine $ "int " <> name <> "() {"
   pushScope
   mapM_ printBlockItem body
