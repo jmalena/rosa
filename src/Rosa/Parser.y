@@ -3,6 +3,8 @@ module Rosa.Parser (
   parse
 ) where
 
+import Data.Maybe
+
 import Rosa.AST
 import Rosa.Lexer
 }
@@ -64,18 +66,18 @@ Program : {- -}                                                                 
         | FuncDecl                                                               { [$1] }
         | FuncDecl Program                                                       { $1:$2 }
 
-FuncDecl : int IDENT '(' FuncDeclParams ')' ';'                                  { FuncDecl $2 $4 Nothing }
-         | int IDENT '(' FuncDeclParams ')' '{' Block '}'                        { FuncDecl $2 $4 (Just $7) }
+FuncDecl : int Ident '(' FuncDeclParams ')' ';'                                  { FuncDecl $2 $4 Nothing }
+         | int Ident '(' FuncDeclParams ')' '{' Block '}'                        { FuncDecl $2 $4 (Just $7) }
 
 FuncDeclParams : {- -}                                                           { [] }
-               | int IDENT                                                       { [$2] }
-               | int IDENT ',' FuncDeclParams                                    { $2:$4 }
+               | int Ident                                                       { [$2] }
+               | int Ident ',' FuncDeclParams                                    { $2:$4 }
 
 Block : {- empty -}                                                              { [] }
       | BlockItem Block                                                          { $1:$2 }
 
-BlockItem : int IDENT ';'                                                        { BlockDecl $2 Nothing }
-          | int IDENT '=' Expr ';'                                               { BlockDecl $2 (Just $4) }
+BlockItem : int Ident ';'                                                        { BlockDecl $2 Nothing }
+          | int Ident '=' Expr ';'                                               { BlockDecl $2 (Just $4) }
           | Statement                                                            { BlockStmt $1 }
 
 Statement : OptionalExpr ';'                                                     { SideEff $1 }
@@ -96,7 +98,7 @@ FuncCallArgs : {- -}                                                            
              | Expr                                                              { [$1] }
              | Expr ',' FuncCallArgs                                             { $1:$3 }
 
-Expr : IDENT '(' FuncCallArgs ')' %prec FUNC_CALL                                { FuncCall $1 $3 }
+Expr : Ident '(' FuncCallArgs ')' %prec FUNC_CALL                                { FuncCall $1 $3 }
      | '-' Expr %prec UNARY_MINUS                                                { UnaryOp OpAddCompl $2 }
      | '!' Expr                                                                  { UnaryOp OpLogCompl $2 }
      | '~' Expr                                                                  { UnaryOp OpBitCompl $2 }
@@ -113,9 +115,11 @@ Expr : IDENT '(' FuncCallArgs ')' %prec FUNC_CALL                               
      | Expr "&&" Expr                                                            { BinaryOp OpLogAnd $1 $3 }
      | Expr "||" Expr                                                            { BinaryOp OpLogOr $1 $3 }
      | '(' Expr ')'                                                              { $2 }
-     | IDENT '=' Expr                                                            { Assign $1 $3 }
-     | IDENT                                                                     { Ref $1 }
+     | Ident '=' Expr                                                            { Assign $1 $3 }
+     | Ident                                                                     { Ref $1 }
      | LIT                                                                       { Lit64 $1 }
+
+Ident : IDENT                                                                    { fromJust (mkIdent $1) }
 
 {
 type P a = String -> Int -> Either String a

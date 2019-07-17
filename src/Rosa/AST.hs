@@ -1,3 +1,7 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Rosa.AST (
   Defn(..),
   BlockItem(..),
@@ -5,19 +9,32 @@ module Rosa.AST (
   Expr(..),
   UnaryOp(..),
   BinaryOp(..),
+  Ident,
+  mkIdent,
+  getRawIdent,
   precOver
 ) where
 
+import Data.Char
+import Data.List
 import Data.Word
 
+import GHC.Generics (Generic)
+
+import Test.SmallCheck.Series
+
 data Defn
-  = FuncDecl String [String] (Maybe [BlockItem])
-  deriving (Eq, Show)
+  = FuncDecl Ident [Ident] (Maybe [BlockItem])
+  deriving (Eq, Show, Generic)
+
+instance Monad m => Serial m Defn
 
 data BlockItem
-  = BlockDecl String (Maybe Expr)
+  = BlockDecl Ident (Maybe Expr)
   | BlockStmt Stmt
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance Monad m => Serial m BlockItem
 
 data Stmt
   = SideEff (Maybe Expr)
@@ -29,22 +46,28 @@ data Stmt
   | Break
   | Continue
   | Return Expr
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance Monad m => Serial m Stmt
 
 data Expr
   = Lit64 Word64 -- keep only non-negative numbers literals due to double representation of negative numbers: (Lit64 -1) vs. (UnaryOp OpBitCompl (Lit64 1)).
-  | Ref String
-  | Assign String Expr
-  | FuncCall String [Expr]
+  | Ref Ident
+  | Assign Ident Expr
+  | FuncCall Ident [Expr]
   | UnaryOp UnaryOp Expr
   | BinaryOp BinaryOp Expr Expr
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance Monad m => Serial m Expr
 
 data UnaryOp
   = OpBitCompl
   | OpLogCompl
   | OpAddCompl
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance Monad m => Serial m UnaryOp
 
 data BinaryOp
   = OpMul
@@ -59,7 +82,26 @@ data BinaryOp
   | OpNEQ
   | OpLogAnd
   | OpLogOr
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance Monad m => Serial m BinaryOp
+
+--------------------------------------------------------------------------------
+-- | Ident
+
+newtype Ident = Ident { getRawIdent :: String }
+  deriving (Eq, Ord, Show)
+
+instance Monad m => Serial m Ident where
+  series = generate $ \d -> [Ident "a"]
+
+mkIdent :: String -> Maybe Ident
+mkIdent "" = Nothing
+mkIdent s = if isValid s then Just (Ident s) else Nothing
+  where
+    isValid (x:xs) =
+      (isAlpha x || x == '_')
+      && all (\x -> isAlpha x || isDigit x || x == '_') xs
 
 --------------------------------------------------------------------------------
 -- | Precedence

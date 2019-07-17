@@ -21,7 +21,7 @@ import Debug.Trace
 
 data CodegenState = CodegenState
   { asm :: String
-  , functionSignatures :: Map.Map String [String]
+  , functionSignatures :: Map.Map Ident [Ident]
   , frameStack :: [Frame.Frame]
   , labelCounter :: Int
   } deriving (Show)
@@ -50,11 +50,11 @@ genLabel = do
 --------------------------------------------------------------------------------
 -- | Function handling
 
-introduceFunction :: String -> [String] -> Codegen ()
+introduceFunction :: Ident -> [Ident] -> Codegen ()
 introduceFunction ident params =
   modify $ \s -> s { functionSignatures = Map.insert ident params (functionSignatures s) }
 
-findFunctionSignature :: String -> Codegen (Maybe [String])
+findFunctionSignature :: Ident -> Codegen (Maybe [Ident])
 findFunctionSignature ident =
   Map.lookup ident <$> gets functionSignatures
 
@@ -81,7 +81,7 @@ stateCurrentFrame f =
   state $ \s@(CodegenState { frameStack = frame:frameStack' }) ->
     (\nextFrame -> s { frameStack = nextFrame:frameStack' }) <$> f frame
 
-findFrameByVar :: String -> Codegen (Maybe Frame.Frame)
+findFrameByVar :: Ident -> Codegen (Maybe Frame.Frame)
 findFrameByVar ident =
   find (\frame -> isJust $ Frame.findVarOffset ident frame) <$> gets frameStack
 
@@ -96,7 +96,7 @@ getPrecedingFrames :: Frame.Frame -> Codegen [Frame.Frame]
 getPrecedingFrames frame =
   tail . dropWhile (/= frame) <$> gets frameStack
 
-findVarOffset :: String -> Codegen (Maybe Int64)
+findVarOffset :: Ident -> Codegen (Maybe Int64)
 findVarOffset ident = do
   frameMaybe <- findFrameByVar ident
   forM frameMaybe $ \frame -> do
@@ -117,15 +117,15 @@ emitDefn :: Defn -> Codegen ()
 emitDefn (FuncDecl ident params Nothing) =
   findFunctionSignature ident >>= \case
     Just _ ->
-      error $ "Error: function \"" <> ident <> "\" is already defined."
+      error $ "Error: function \"" <> getRawIdent ident <> "\" is already defined."
     Nothing ->
       introduceFunction ident params
 emitDefn (FuncDecl ident params (Just body)) =
   findFunctionSignature ident >>= \case
     Just _ ->
-      error $ "Error: function \"" <> ident <> "\" is already defined."
+      error $ "Error: function \"" <> getRawIdent ident <> "\" is already defined."
     Nothing -> do
-      emit 0 $ "_" <> ident <> ":"
+      emit 0 $ "_" <> getRawIdent ident <> ":"
       pushFrame Frame.empty
       introduceFunction ident params
       forM_ (zip [0,8..] params) $ \(offset, varIdent) -> -- insert phantom function argument offsets
@@ -232,16 +232,16 @@ emitExpr reg (Lit64 val) =
 emitExpr reg (FuncCall ident args) =
   findFunctionSignature ident >>= \case
     Nothing ->
-      error $ "Error: unable to call undefined function \"" <> ident <> "\"."
+      error $ "Error: unable to call undefined function \"" <> getRawIdent ident <> "\"."
     Just sig -> do
       when (length sig /= length args) $
-        error $ "Error: function \"" <> ident <> "\" expect " <> show (length sig) <> " arguments, but " <> show (length args) <> " was given."
+        error $ "Error: function \"" <> getRawIdent ident <> "\" expect " <> show (length sig) <> " arguments, but " <> show (length args) <> " was given."
       let argsStackSize = 8 * length sig
       forM_ (reverse args) $ \argExpr -> do
         stateCurrentFrame Frame.alloc64
         emitExpr reg argExpr
         emit 2 $ "pushq %" <> reg
-      emit 2 $ "callq _" <> ident
+      emit 2 $ "callq _" <> getRawIdent ident
       replicateM_ (length sig) $ -- dealloc
         modifyCurrentFrame Frame.dealloc64
       emit 2 $ "addq $" <> show argsStackSize <> ", %rsp"
@@ -376,13 +376,13 @@ emitExpr reg (BinaryOp OpLogOr expr1 expr2) = do
 emitExpr reg (Assign ident expr) =
   findVarOffset ident >>= \case
     Nothing ->
-      error $ "Error: unable to assign value to undefined variable \"" <> ident <> "\"."
+      error $ "Error: unable to assign value to undefined variable \"" <> getRawIdent ident <> "\"."
     Just memOffset -> do
       emitExpr reg expr
       emit 2 $ "movq %" <> reg <> ", " <> show memOffset <> "(%rbp)"
 emitExpr reg (Ref ident) =
   findVarOffset ident >>= \case
     Nothing ->
-      error $ "Error: unable to reference undefined variable \"" <> ident <> "\"."
+      error $ "Error: unable to reference undefined variable \"" <> getRawIdent ident <> "\"."
     Just memOffset ->
       emit 2 $ "movq " <> show memOffset <> "(%rbp), %" <> reg

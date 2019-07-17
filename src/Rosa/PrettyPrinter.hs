@@ -44,20 +44,24 @@ printDefns defns =
     emitLine ""
 
 printDefn :: Defn -> Printer ()
-printDefn (FuncDecl name _ Nothing) =
-  emitLine $ "int " <> name <> "();"
-printDefn (FuncDecl name _ (Just body)) = do
-  emitLine $ "int " <> name <> "() {"
+printDefn (FuncDecl ident params Nothing) =
+  emitLine $ "int " <> getRawIdent ident <> "(" <> showFuncParams params <> ");"
+printDefn (FuncDecl ident params (Just body)) = do
+  emitLine $ "int " <> getRawIdent ident <> "(" <> showFuncParams params <> ") {"
   pushScope
   mapM_ printBlockItem body
   popScope
   emitLine "}"
 
+showFuncParams :: [Ident] -> String
+showFuncParams =
+  intercalate ", " . fmap (("int " <>) . getRawIdent)
+
 printBlockItem :: BlockItem -> Printer ()
 printBlockItem (BlockDecl ident Nothing) =
-  emitLine $ "int " <> ident <> ";"
+  emitLine $ "int " <> getRawIdent ident <> ";"
 printBlockItem (BlockDecl ident (Just expr)) =
-  emitLine $ "int " <> ident <> "=" <> showExpr expr <> ";"
+  emitLine $ "int " <> getRawIdent ident <> "=" <> showExpr expr <> ";"
 printBlockItem (BlockStmt stmt) =
   printStmt stmt
 
@@ -94,6 +98,7 @@ printStmt (For preExprMaybe condExprMaybe postExprMaybe bodyStmt) = do
     , maybe "" (\condExpr -> showExpr condExpr <> " ") condExprMaybe
     , ";"
     , maybe "" (\postExpr -> showExpr postExpr <> " ") postExprMaybe
+    , ")"
     ]
   printStmt bodyStmt
 printStmt (While condExpr bodyStmt) = do
@@ -102,7 +107,7 @@ printStmt (While condExpr bodyStmt) = do
 printStmt (Do bodyStmt condExpr) = do
   emitLine "do"
   printStmt bodyStmt
-  emitLine $ "while (" <> showExpr condExpr <> ")"
+  emitLine $ "while (" <> showExpr condExpr <> ");"
 printStmt Break =
   emitLine "break;"
 printStmt Continue =
@@ -114,9 +119,11 @@ showExpr :: Expr -> String
 showExpr (Lit64 num) =
   show num
 showExpr (Ref ident) =
-  ident
+  getRawIdent ident
 showExpr (Assign ident expr) =
-  ident <> " = " <> showExpr expr
+  getRawIdent ident <> " = " <> showExpr expr
+showExpr (FuncCall ident expr) =
+  getRawIdent ident <> "(" <> intercalate ", " (showExpr <$> expr) <> ")"
 showExpr (UnaryOp op expr) =
   showUnaryOp op <> showExpr expr
 showExpr (BinaryOp op lexpr rexpr) = mconcat

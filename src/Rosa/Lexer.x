@@ -14,40 +14,40 @@ $alpha = [a-zA-Z]
 $eol   = [\n]
 
 tokens :-
-  $eol                          ;
-  $white+                       ;
-  \(                            { \s -> TokenLParen }
-  \)                            { \s -> TokenRParen }
-  \{                            { \s -> TokenLBracket }
-  \}                            { \s -> TokenRBracket }
-  \;                            { \s -> TokenSemi }
-  \~                            { \s -> TokenBitCompl }
-  \!                            { \s -> TokenLogCompl }
-  \*                            { \s -> TokenMul }
-  \/                            { \s -> TokenDiv }
-  \+                            { \s -> TokenPlus }
-  \-                            { \s -> TokenMinus }
-  "<="                          { \s -> TokenLTE }
-  "<"                           { \s -> TokenLT }
-  ">="                          { \s -> TokenGTE }
-  ">"                           { \s -> TokenGT }
-  "=="                          { \s -> TokenEQ }
-  "!="                          { \s -> TokenNEQ }
-  "&&"                          { \s -> TokenLogAnd }
-  "||"                          { \s -> TokenLogOr }
-  \=                            { \s -> TokenAssign }
-  "if"                          { \s -> TokenIfKeyword }
-  "else"                        { \s -> TokenElseKeyword }
-  "for"                         { \s -> TokenFor }
-  "while"                       { \s -> TokenWhile }
-  "do"                          { \s -> TokenDo }
-  "break"                       { \s -> TokenBreak }
-  "continue"                    { \s -> TokenContinue }
-  "return"                      { \s -> TokenRetKeyword }
-  "int"                         { \s -> TokenIntKeyword }
-  $digit+                       { \s -> TokenLit (read s) }
-  $alpha [$alpha $digit \_]*    { \s -> TokenIdent s }
-  \,                            { \s -> TokenComma }
+  $eol                            ;
+  $white+                         ;
+  \(                              { \s -> TokenLParen }
+  \)                              { \s -> TokenRParen }
+  \{                              { \s -> TokenLBracket }
+  \}                              { \s -> TokenRBracket }
+  \;                              { \s -> TokenSemi }
+  \~                              { \s -> TokenBitCompl }
+  \!                              { \s -> TokenLogCompl }
+  \*                              { \s -> TokenMul }
+  \/                              { \s -> TokenDiv }
+  \+                              { \s -> TokenPlus }
+  \-                              { \s -> TokenMinus }
+  "<="                            { \s -> TokenLTE }
+  "<"                             { \s -> TokenLT }
+  ">="                            { \s -> TokenGTE }
+  ">"                             { \s -> TokenGT }
+  "=="                            { \s -> TokenEQ }
+  "!="                            { \s -> TokenNEQ }
+  "&&"                            { \s -> TokenLogAnd }
+  "||"                            { \s -> TokenLogOr }
+  \=                              { \s -> TokenAssign }
+  "if"                            { \s -> TokenIfKeyword }
+  "else"                          { \s -> TokenElseKeyword }
+  "for"                           { \s -> TokenFor }
+  "while"                         { \s -> TokenWhile }
+  "do"                            { \s -> TokenDo }
+  "break"                         { \s -> TokenBreak }
+  "continue"                      { \s -> TokenContinue }
+  "return"                        { \s -> TokenRetKeyword }
+  "int"                           { \s -> TokenIntKeyword }
+  $digit+                         { \s -> TokenLit (read s) }
+  [$alpha \_] [$alpha $digit \_]* { \s -> TokenIdent s }
+  \,                              { \s -> TokenComma }
 
 {
 data Token

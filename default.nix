@@ -1,5 +1,6 @@
-{ mkDerivation, alex, array, base, containers, happy, hspec, mtl
-, optparse-applicative, process, QuickCheck, stdenv
+{ mkDerivation, alex, array, base, containers, happy, mtl
+, optparse-applicative, process, stdenv, tasty, tasty-discover
+, tasty-smallcheck
 }:
 mkDerivation {
   pname = "rosa";
@@ -10,6 +11,9 @@ mkDerivation {
   libraryHaskellDepends = [ array base containers mtl ];
   libraryToolDepends = [ alex happy ];
   executableHaskellDepends = [ base optparse-applicative process ];
-  testHaskellDepends = [ base hspec QuickCheck ];
+  testHaskellDepends = [
+    base tasty tasty-discover tasty-smallcheck
+  ];
+  testToolDepends = [ tasty-discover ];
   license = stdenv.lib.licenses.bsd3;
 }

@@ -10,9 +10,11 @@ module Rosa.Codegen.Frame (
 import Data.Int
 import qualified Data.Map as Map
 
+import Rosa.AST
+
 data Frame = Frame
   { size :: Int64
-  , variables :: Map.Map String Int64
+  , variables :: Map.Map Ident Int64
   } deriving (Eq, Show)
 
 empty :: Frame
@@ -30,10 +32,10 @@ dealloc64 :: Frame -> Frame
 dealloc64 frame =
   frame { size = (size frame) - 8}
 
-markVar :: String -> Int64 -> Frame -> Frame
+markVar :: Ident -> Int64 -> Frame -> Frame
 markVar ident offset frame =
   frame { variables = Map.insert ident offset (variables frame) }
 
-findVarOffset :: String -> Frame -> Maybe Int64
+findVarOffset :: Ident -> Frame -> Maybe Int64
 findVarOffset ident frame =
   (variables frame) Map.!? ident

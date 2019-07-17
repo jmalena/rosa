@@ -29,7 +29,8 @@ library
   build-depends:       array >=0.5 && <0.6,
                        base >=4.12 && <4.13,
                        containers >=0.6 && <0.7,
-                       mtl >=2.2 && <2.3
+                       mtl >=2.2 && <2.3,
+                       smallcheck >=1.1 && <1.2
   build-tools:         alex >=3.2 && <3.3,
                        happy >=1.19 && <1.20
   hs-source-dirs:      src
@@ -46,15 +47,14 @@ executable rosa
   hs-source-dirs:      exe
   default-language:    Haskell2010
 
-test-suite spec
+test-suite test
   type:                exitcode-stdio-1.0
-  main-is:             Spec.hs
-  other-modules:       Rosa.ParserSpec
-                       Rosa.Parser.Gen
-                       Rosa.PrettyPrinterSpec
+  main-is:             Driver.hs
+  other-modules:       Rosa.ParserAndPrettyPrinterTest
   build-depends:       base >=4.12 && <4.13,
-                       hspec >=2.6 && <2.7,
-                       rosa,
-                       QuickCheck >=2.12 && <2.13
+                       tasty >=1.2 && <1.3,
+                       tasty-discover >=4.2 && <4.3,
+                       tasty-smallcheck >=0.8 && <0.9,
+                       rosa
   hs-source-dirs:      test
   default-language:    Haskell2010
