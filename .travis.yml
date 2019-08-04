@@ -2,4 +2,4 @@ language: nix
 install:
   - nix-build release.nix
 script:
-  - nix-shell . --run "cabal new-test"
+  - nix-shell --run "cabal new-test"
