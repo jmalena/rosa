@@ -1,24 +1,23 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Rosa.ParserAndPrettyPrinterTest where
 
-import Data.Maybe
+import Data.Either
 
 import Rosa.AST
 import Rosa.Parser
 import Rosa.PrettyPrinter
 
 import Test.Tasty
-import qualified Test.Tasty.SmallCheck as SC
+import Test.Tasty.Discover
+import Test.Tasty.SmallCheck
 
-test_parser :: [TestTree]
-test_parser =
-  [ --  localOption (6 :: SC.SmallCheckDepth) $ SC.testProperty "SC: parse ∘ prettyPrint = id (top decl)" $ \topDecls ->
-    --  property_leftInverse topDecls
-    --  , localOption (6 :: SC.SmallCheckDepth) $ SC.testProperty "SC: parse ∘ prettyPrint = id (func body)" $ \funcBody ->
-    --  property_leftInverse [FuncDecl (fromJust (mkIdent "main")) [] funcBody]
-  ]
-  where
-    property_leftInverse ast =
-      case parse (prettyPrint ast) of
-        Left err -> error err
-        Right ast' ->
-          ast == ast'
+scprop_parsePrettyPrintIdempotence :: [Defn] -> Bool
+scprop_parsePrettyPrintIdempotence ast =
+  case parse (prettyPrint ast) of
+    Right ast' -> ast == ast'
+    Left _     -> False
+
+scprop_parsingValidInputSucceeds :: [Defn] -> Bool
+scprop_parsingValidInputSucceeds =
+  isRight . parse . prettyPrint
