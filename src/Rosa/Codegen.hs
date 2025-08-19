@@ -8,6 +8,7 @@ module Rosa.Codegen (
 ) where
 
 import Control.Monad.State
+import Control.Monad.Writer
 
 import Data.Int
 import Data.List
@@ -19,27 +20,32 @@ import qualified Rosa.Codegen.Frame as Frame
 
 import Debug.Trace
 
+type ASM = String
+
 data CodegenState = CodegenState
-  { asm :: String
-  , functionSignatures :: Map.Map Ident [Ident]
+  { functionSignatures :: Map.Map Ident [Ident]
   , frameStack :: [Frame.Frame]
   , labelCounter :: Int
   } deriving (Show)
 
-newtype Codegen a = Codegen { runCodegen' :: State CodegenState a }
-  deriving (Functor, Applicative, Monad, MonadState CodegenState)
+newtype Codegen a = Codegen
+  { unCodegen :: StateT CodegenState (Writer ASM) a
+  } deriving (Functor, Applicative, Monad, MonadState CodegenState, MonadWriter ASM)
 
 runCodegen :: Codegen a -> String
-runCodegen = asm . flip execState codegenState . runCodegen'
-  where codegenState = CodegenState { asm = "", functionSignatures = Map.empty, frameStack = [], labelCounter = 0 }
+runCodegen cg = execWriter (evalStateT (unCodegen cg) initState)
+  where
+    initState = CodegenState
+      { functionSignatures = Map.empty
+      , frameStack = []
+      , labelCounter = 0
+      }
 
 --------------------------------------------------------------------------------
 -- | Code emitting
 
 emit :: Int -> String -> Codegen ()
-emit indent instr =
-  modify $ \s -> s { asm = asm s <> str <> "\n" }
-  where str = replicate indent ' ' <> instr
+emit indent instr = tell (replicate indent ' ' <> instr <> "\n")
 
 genLabel :: Codegen String
 genLabel = do
