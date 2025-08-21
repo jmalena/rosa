@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Rosa.PrettyPrinter (
+module Rosa.Frontend.PrettyPrinter (
   prettyPrint
 ) where
 
@@ -8,7 +8,7 @@ import Control.Monad.State
 
 import Data.List
 
-import Rosa.AST
+import Rosa.Frontend.AST
 
 data PrinterState = PrinterState
   { code :: String
@@ -116,7 +116,7 @@ printStmt (Return expr) =
   emitLine $ "return " <> showExpr expr <> ";"
 
 showExpr :: Expr -> String
-showExpr (Lit64 num) =
+showExpr (NumLit num) =
   show num
 showExpr (Ref ident) =
   getRawIdent ident

@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Rosa.AST (
+module Rosa.Frontend.AST (
   Defn(..),
   BlockItem(..),
   Stmt(..),
@@ -37,7 +37,7 @@ data BlockItem
 instance Monad m => Serial m BlockItem
 
 data Stmt
-  = SideEff (Maybe Expr)
+  = SideEff (Maybe Expr) -- TODO: Rename SideEff to something like e.g. "SExpr"!
   | Compound [BlockItem]
   | If Expr Stmt (Maybe Stmt)
   | For (Maybe Expr) (Maybe Expr) (Maybe Expr) Stmt
@@ -51,7 +51,8 @@ data Stmt
 instance Monad m => Serial m Stmt
 
 data Expr
-  = Lit64 Word64 -- keep only non-negative numbers literals due to double representation of negative numbers: (Lit64 -1) vs. (UnaryOp OpBitCompl (Lit64 1)).
+  = NumLit Word64 -- TODO: replace with String or Text
+  --StrLit String -- FIXME: Comming soon!
   | Ref Ident
   | Assign Ident Expr
   | FuncCall Ident [Expr]

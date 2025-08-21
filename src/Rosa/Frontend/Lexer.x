@@ -1,5 +1,5 @@
 {
-module Rosa.Lexer (
+module Rosa.Frontend.Lexer (
   Token(..),
   tokenize
 ) where

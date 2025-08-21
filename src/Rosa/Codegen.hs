@@ -15,7 +15,7 @@ import Data.List
 import qualified Data.Map as Map
 import Data.Maybe
 
-import Rosa.AST
+import Rosa.Frontend.AST
 import qualified Rosa.Codegen.Frame as Frame
 
 import Debug.Trace
@@ -233,7 +233,7 @@ emitStmt (Return expr) =
   emitExpr "rax" expr
 
 emitExpr :: String -> Expr -> Codegen ()
-emitExpr reg (Lit64 val) =
+emitExpr reg (NumLit val) =
   emit 2 $ "movq $" <> show val <> ", %" <> reg
 emitExpr reg (FuncCall ident args) =
   findFunctionSignature ident >>= \case

@@ -1,17 +1,19 @@
 {
-module Rosa.Parser (
+module Rosa.Frontend.Parser (
   parse
 ) where
 
 import Data.Maybe
 
-import Rosa.AST
-import Rosa.Lexer
+import Rosa.Frontend.AST
+import Rosa.Frontend.Lexer
 }
 
-%name expr
+%name parse Program
 %tokentype { Token }
-%monad { P } { thenP } { returnP }
+
+%monad { P }
+%errorhandlertype explist
 %error { parseError }
 
 %token
@@ -62,14 +64,14 @@ import Rosa.Lexer
 
 %%
 
-Program : {- -}                                                                  { [] }
+Program : {- empty -}                                                            { [] }
         | FuncDecl                                                               { [$1] }
         | FuncDecl Program                                                       { $1:$2 }
 
 FuncDecl : int Ident '(' FuncDeclParams ')' ';'                                  { FuncDecl $2 $4 Nothing }
          | int Ident '(' FuncDeclParams ')' '{' Block '}'                        { FuncDecl $2 $4 (Just $7) }
 
-FuncDeclParams : {- -}                                                           { [] }
+FuncDeclParams : {- empty -}                                                     { [] }
                | int Ident                                                       { [$2] }
                | int Ident ',' FuncDeclParams                                    { $2:$4 }
 
@@ -94,7 +96,7 @@ Statement : OptionalExpr ';'                                                    
 OptionalExpr : {- empty -}                                                       { Nothing }
              | Expr                                                              { Just $1 }
 
-FuncCallArgs : {- -}                                                             { [] }
+FuncCallArgs : {- empty -}\                                                      { [] }
              | Expr                                                              { [$1] }
              | Expr ',' FuncCallArgs                                             { $1:$3 }
 
@@ -117,25 +119,31 @@ Expr : Ident '(' FuncCallArgs ')' %prec FUNC_CALL                               
      | '(' Expr ')'                                                              { $2 }
      | Ident '=' Expr                                                            { Assign $1 $3 }
      | Ident                                                                     { Ref $1 }
-     | LIT                                                                       { Lit64 $1 }
+     | LIT                                                                       { NumLit $1 }
 
 Ident : IDENT                                                                    { fromJust (mkIdent $1) }
 
 {
-type P a = String -> Int -> Either String a
+newtype P a = P { runP :: String -> Int -> Either String a }
 
-thenP :: P a -> (a -> P b) -> P b
-m `thenP` k = \s l ->
-  case m s l of
-    Left s -> Left s
-    Right a -> k a s l
+instance Functor P where
+  fmap f (P m) = P $ \s l -> fmap f (m s l)
 
-returnP :: a -> P a
-returnP a = \s l -> Right a
+instance Applicative P where
+  pure x = P $ \_ _ -> Right x
+  (P f) <*> (P x) = P $ \s l -> case f s l of
+    Left e -> Left e
+    Right g -> fmap g (x s l)
+
+instance Monad P where
+  (P m) >>= k = P $ \s l -> case m s l of
+    Left e -> Left e
+    Right v -> runP (k v) s l
 
 parseError :: [Token] -> P a
-parseError tok = \s l -> error ("Parse error on line " ++ show l ++ show tok ++ "\n")
+parseError toks = P $ \_ l ->
+  Left ("Parse error on line " ++ show l ++ " near " ++ show toks)
 
 parse :: String -> Either String [Defn]
-parse s = expr (tokenize s) "foo" 1
+parse s = runP (parse (tokenize s)) "rosa" 1
 }

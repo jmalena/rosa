@@ -10,7 +10,7 @@ module Rosa.Codegen.Frame (
 import Data.Int
 import qualified Data.Map as Map
 
-import Rosa.AST
+import Rosa.Frontend.AST
 
 data Frame = Frame
   { size :: Int64
