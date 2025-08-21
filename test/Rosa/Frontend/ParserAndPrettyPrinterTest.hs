@@ -1,15 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Rosa.ParserAndPrettyPrinterTest where
+module Rosa.Frontend.ParserAndPrettyPrinterTest where
 
 import Data.Either
 
-import Rosa.AST
-import Rosa.Parser
-import Rosa.PrettyPrinter
+import Rosa.Frontend.AST
+import Rosa.Frontend.Parser
+import Rosa.Frontend.PrettyPrinter
 
 import Test.Tasty
-import Test.Tasty.Discover
 import Test.Tasty.SmallCheck
 
 scprop_parsePrettyPrintIdempotence :: [Defn] -> Bool
