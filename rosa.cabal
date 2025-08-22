@@ -1,57 +1,64 @@
-cabal-version:       2.4
-name:                rosa
-version:             0.1.0.0
+cabal-version:          3.0
+name:                   rosa
+version:                0.1.0.0
 -- synopsis:
 -- description:
-license:             BSD-3-Clause
-license-file:        LICENSE
-author:              jmalena
-maintainer:          jonas.malena@gmail.com
+license:                BSD-3-Clause
+license-file:           LICENSE
+author:                 Jonáš Malena
+maintainer:             jonas.malena@gmail.com
 -- copyright:
--- category:
-build-type:          Simple
-extra-source-files:  CHANGELOG.md
+build-type:             Simple
+extra-doc-files:        CHANGELOG.md
+-- extra-source-files:
+
+common warnings
+    ghc-options:        -Wall
 
 library
-  exposed-modules:     Rosa.Compiler
-                       --
-                       Rosa.AST
-                       Rosa.Parser
-                       Rosa.PrettyPrinter
-                       --
-  other-modules:       Rosa.Codegen
-                       Rosa.Codegen.Frame
-                       Rosa.Lexer
-  -- other-extensions:
-  build-depends:       array >=0.5 && <0.6,
-                       base >=4.9 && <5,
-                       containers >=0.6 && <0.7,
-                       mtl >=2.2 && <2.3,
-                       smallcheck >=1.2 && <1.3
-  build-tool-depends:  alex:alex >=3.5 && <3.6,
-                       happy:happy >=2.0 && <2.1
-  hs-source-dirs:      src
-  default-language:    Haskell2010
+    import:             warnings
+    exposed-modules:    Rosa.Frontend.AST
+                        Rosa.Frontend.Lexer
+                        Rosa.Frontend.Parser
+                        Rosa.Frontend.PrettyPrinter
+                        Rosa.Compiler
+    other-modules:      Rosa.Codegen.Frame
+                        Rosa.Codegen
+    -- other-extensions:
+    build-depends:      array >=0.5 && <0.6,
+                        base >=4.9 && <5,
+                        containers >=0.6 && <0.7,
+                        mtl >=2.3 && <2.4,
+                        smallcheck >=1.2 && <1.3
+    build-tool-depends: alex:alex >=3.5 && <3.6,
+                        happy:happy >=2.1 && <2.2
+    hs-source-dirs:     src
+    default-language:   Haskell2010
 
 executable rosa
-  main-is:             Main.hs
-  -- other-modules:
-  -- other-extensions:
-  build-depends:       base >=4.9 && <5,
-                       optparse-applicative >=0.18 && <0.19,
-                       process >=1.6 && <1.7,
-                       rosa
-  hs-source-dirs:      exe
-  default-language:    Haskell2010
+    import:             warnings
+    main-is:            Main.hs
+    -- other-modules:
+    -- other-extensions:
+    build-depends:      base >=4.9 && <5,
+                        optparse-applicative >=0.18 && <0.19,
+                        process >=1.6 && <1.7,
+                        rosa
+    hs-source-dirs:     exe
+    default-language:   Haskell2010
 
-test-suite test
-  type:                exitcode-stdio-1.0
-  main-is:             Driver.hs
-  other-modules:       Rosa.ParserAndPrettyPrinterTest
-  build-depends:       base >=4.9 && <5,
-                       tasty >=1.5 && <1.6,
-                       tasty-discover >=5.0 && <5.1,
-                       tasty-smallcheck >=0.8 && <0.9,
-                       rosa
-  hs-source-dirs:      test
-  default-language:    Haskell2010
+test-suite rosa-test
+    import:             warnings
+    default-language:   Haskell2010
+    other-modules:      Rosa.Frontend.LiteralParserTest,
+                        Rosa.Frontend.ParserAndPrettyPrinterTest
+    -- other-extensions:
+    type:               exitcode-stdio-1.0
+    hs-source-dirs:     test
+    main-is:            Driver.hs
+    build-depends:      base >=4.9 && <5,
+                        tasty >=1.5 && <1.6,
+                        tasty-hunit >=0.10 && <0.11,
+                        tasty-smallcheck >=0.8 && <0.9,
+                        rosa
+    build-tool-depends: tasty-discover:tasty-discover >=5.1 && <5.2
