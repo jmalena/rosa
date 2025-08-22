@@ -9,7 +9,7 @@ import Rosa.Frontend.AST
 import Rosa.Frontend.Lexer
 }
 
-%name parse Program
+%name parseProgram Program
 %tokentype { Token }
 
 %monad { P }
@@ -96,7 +96,7 @@ Statement : OptionalExpr ';'                                                    
 OptionalExpr : {- empty -}                                                       { Nothing }
              | Expr                                                              { Just $1 }
 
-FuncCallArgs : {- empty -}\                                                      { [] }
+FuncCallArgs : {- empty -}                                                       { [] }
              | Expr                                                              { [$1] }
              | Expr ',' FuncCallArgs                                             { $1:$3 }
 
@@ -131,19 +131,21 @@ instance Functor P where
 
 instance Applicative P where
   pure x = P $ \_ _ -> Right x
-  (P f) <*> (P x) = P $ \s l -> case f s l of
-    Left e -> Left e
-    Right g -> fmap g (x s l)
+  (P f) <*> (P x) = P $ \s l ->
+    case f s l of
+      Left e -> Left e
+      Right g -> fmap g (x s l)
 
 instance Monad P where
-  (P m) >>= k = P $ \s l -> case m s l of
-    Left e -> Left e
-    Right v -> runP (k v) s l
+  (P m) >>= k = P $ \s l ->
+    case m s l of
+      Left e -> Left e
+      Right v -> runP (k v) s l
 
-parseError :: [Token] -> P a
-parseError toks = P $ \_ l ->
+parseError :: ([Token], [String]) -> P a
+parseError (toks, _) = P $ \_ l ->
   Left ("Parse error on line " ++ show l ++ " near " ++ show toks)
 
 parse :: String -> Either String [Defn]
-parse s = runP (parse (tokenize s)) "rosa" 1
+parse s = runP (parseProgram (tokenize s)) "rosa" 1
 }

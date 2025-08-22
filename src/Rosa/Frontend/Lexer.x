@@ -16,38 +16,38 @@ $eol   = [\n]
 tokens :-
   $eol                            ;
   $white+                         ;
-  \(                              { \s -> TokenLParen }
-  \)                              { \s -> TokenRParen }
-  \{                              { \s -> TokenLBracket }
-  \}                              { \s -> TokenRBracket }
-  \;                              { \s -> TokenSemi }
-  \~                              { \s -> TokenBitCompl }
-  \!                              { \s -> TokenLogCompl }
-  \*                              { \s -> TokenMul }
-  \/                              { \s -> TokenDiv }
-  \+                              { \s -> TokenPlus }
-  \-                              { \s -> TokenMinus }
-  "<="                            { \s -> TokenLTE }
-  "<"                             { \s -> TokenLT }
-  ">="                            { \s -> TokenGTE }
-  ">"                             { \s -> TokenGT }
-  "=="                            { \s -> TokenEQ }
-  "!="                            { \s -> TokenNEQ }
-  "&&"                            { \s -> TokenLogAnd }
-  "||"                            { \s -> TokenLogOr }
-  \=                              { \s -> TokenAssign }
-  "if"                            { \s -> TokenIfKeyword }
-  "else"                          { \s -> TokenElseKeyword }
-  "for"                           { \s -> TokenFor }
-  "while"                         { \s -> TokenWhile }
-  "do"                            { \s -> TokenDo }
-  "break"                         { \s -> TokenBreak }
-  "continue"                      { \s -> TokenContinue }
-  "return"                        { \s -> TokenRetKeyword }
-  "int"                           { \s -> TokenIntKeyword }
+  \(                              { \_ -> TokenLParen }
+  \)                              { \_ -> TokenRParen }
+  \{                              { \_ -> TokenLBracket }
+  \}                              { \_ -> TokenRBracket }
+  \;                              { \_ -> TokenSemi }
+  \~                              { \_ -> TokenBitCompl }
+  \!                              { \_ -> TokenLogCompl }
+  \*                              { \_ -> TokenMul }
+  \/                              { \_ -> TokenDiv }
+  \+                              { \_ -> TokenPlus }
+  \-                              { \_ -> TokenMinus }
+  "<="                            { \_ -> TokenLTE }
+  "<"                             { \_ -> TokenLT }
+  ">="                            { \_ -> TokenGTE }
+  ">"                             { \_ -> TokenGT }
+  "=="                            { \_ -> TokenEQ }
+  "!="                            { \_ -> TokenNEQ }
+  "&&"                            { \_ -> TokenLogAnd }
+  "||"                            { \_ -> TokenLogOr }
+  \=                              { \_ -> TokenAssign }
+  "if"                            { \_ -> TokenIfKeyword }
+  "else"                          { \_ -> TokenElseKeyword }
+  "for"                           { \_ -> TokenFor }
+  "while"                         { \_ -> TokenWhile }
+  "do"                            { \_ -> TokenDo }
+  "break"                         { \_ -> TokenBreak }
+  "continue"                      { \_ -> TokenContinue }
+  "return"                        { \_ -> TokenRetKeyword }
+  "int"                           { \_ -> TokenIntKeyword }
   $digit+                         { \s -> TokenLit (read s) }
   [$alpha \_] [$alpha $digit \_]* { \s -> TokenIdent s }
-  \,                              { \s -> TokenComma }
+  \,                              { \_ -> TokenComma }
 
 {
 data Token

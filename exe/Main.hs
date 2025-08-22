@@ -38,5 +38,5 @@ run (Options { inputFile, outputFile }) = do
     Right asm -> do
       let asmFile = outputFile <> ".s"
       writeFile asmFile asm
-      runCommand $ "gcc " <> asmFile <> " -o '" <> outputFile <> "'"
+      _ <- runCommand $ "gcc " <> asmFile <> " -o '" <> outputFile <> "'"
       return ()

@@ -4,6 +4,7 @@ module Rosa.Frontend.PrettyPrinter (
   prettyPrint
 ) where
 
+import Control.Monad
 import Control.Monad.State
 
 import Data.List
