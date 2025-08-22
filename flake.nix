@@ -9,23 +9,28 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        ghcVersion = "ghc96";
         pkgs = import nixpkgs { inherit system; };
-        haskellPackages = pkgs.haskell.packages.ghc94;
-        rosaPkg = haskellPackages.callCabal2nix "rosa" ./. { };
+        hsPkgs = pkgs.haskell.packages.${ghcVersion};
+        rosaPkg = hsPkgs.callCabal2nix "rosa" ./. {
+          happy = hsPkgs.happy_2_1_5;
+        };
       in {
-        packages.default = rosaPkg;
-
-        devShells.default = haskellPackages.shellFor {
-          packages = p: [ self.packages.${system}.default ];
-
+        # nix develop
+        devShells.default = hsPkgs.shellFor {
+          packages = p: [ rosaPkg ];
           buildInputs = with pkgs; [
-            cabal-install
-          ];
+            # app
+            rosaPkg
 
-          nativeBuildInputs = with haskellPackages; [
-            alex
-            happy
+            # tools
+            cabal-install
+            ghcid
           ];
         };
-      });
+
+        # nix build
+        packages.default = rosaPkg;
+      }
+    );
 }
