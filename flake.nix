@@ -12,15 +12,13 @@
         ghcVersion = "ghc96";
         pkgs = import nixpkgs { inherit system; };
         hsPkgs = pkgs.haskell.packages.${ghcVersion};
-        rosaPkg = hsPkgs.callCabal2nix "rosa" ./. {
-          happy = hsPkgs.happy_2_1_5;
-        };
+        rosaPkg = hsPkgs.callCabal2nix "rosa" ./. {};
       in {
         # nix develop
         devShells.default = hsPkgs.shellFor {
           packages = p: [ rosaPkg ];
           buildInputs = with pkgs; [
-            # app
+            # bin
             rosaPkg
 
             # tools
