@@ -117,6 +117,79 @@ unit_varDefn_multiLine =
   |]
 
 --------------------------------------------------------------------------------
+-- | Expr Statements
+
+unit_exprStmt :: IO ()
+unit_exprStmt =
+  assertValidProgram [s|
+    int main() {
+      0;
+    }
+  |]
+  
+--------------------------------------------------------------------------------
+-- | If-then Statements
+
+unit_ifStmt_wEmptyExprStmt :: IO ()
+unit_ifStmt_wEmptyExprStmt =
+  assertValidProgram [s|
+    int main() {
+      if (1);
+    }
+  |]
+  
+unit_ifStmt_wExprStmt :: IO ()
+unit_ifStmt_wExprStmt =
+  assertValidProgram [s|
+    int main() {
+      if (1) 2;
+    }
+  |]
+  
+unit_ifStmt_wEmptyThenBlock :: IO ()
+unit_ifStmt_wEmptyThenBlock =
+  assertValidProgram [s|
+    int main() {
+      if (1) {}
+    }
+  |]
+
+unit_ifStmt_woTestExpr :: IO ()
+unit_ifStmt_woTestExpr =
+  assertInvalidProgram [s|
+    int main() {
+      if () {}
+    }
+  |]
+  
+unit_ifStmt_woThen :: IO ()
+unit_ifStmt_woThen =
+  assertInvalidProgram [s|
+    int main() {
+      if (1)
+    }
+  |]
+
+unit_ifStmt_wDeclInThen :: IO ()
+unit_ifStmt_wDeclInThen =
+  assertInvalidProgram [s|
+    int main() {
+      if (1) int x;
+    }
+  |]
+
+unit_ifStmt_wDefnInThen :: IO ()
+unit_ifStmt_wDefnInThen =
+  assertInvalidProgram [s|
+    int main() {
+      if (1) int x = 2;
+    }
+  |]
+
+--------------------------------------------------------------------------------
+-- | If-then-else Statements
+
+--------------------------------------------------------------------------------
 -- | Test Utils
 
 assertValidProgram :: String -> Assertion

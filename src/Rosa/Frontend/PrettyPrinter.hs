@@ -67,23 +67,23 @@ printBlockItem (BlockStmt stmt) =
   printStmt stmt
 
 printStmt :: Stmt -> Printer ()
-printStmt (ExprStmt Nothing) =
+printStmt (StmtExpr Nothing) =
   emitLine ";"
-printStmt (ExprStmt (Just expr)) =
+printStmt (StmtExpr (Just expr)) =
   emitLine $ showExpr expr <> ";"
-printStmt (Compound stmt) = do
+printStmt (Compound cstmt) = do
   emitLine "{"
   pushScope
-  mapM_ printBlockItem stmt
+  mapM_ printBlockItem cstmt
   popScope
   emitLine "}"
-printStmt (If condExpr thenStmt Nothing) = do
-  emitLine $ "if (" <> showExpr condExpr <> ")"
+printStmt (If testExpr thenStmt Nothing) = do
+  emitLine $ "if (" <> showExpr testExpr <> ")"
   pushScope
   printStmt thenStmt
   popScope
-printStmt (If condExpr thenStmt (Just elseStmt)) = do
-  emitLine $ "if (" <> showExpr condExpr <> ")"
+printStmt (If testExpr thenStmt (Just elseStmt)) = do
+  emitLine $ "if (" <> showExpr testExpr <> ")"
   pushScope
   printStmt thenStmt
   popScope
@@ -91,24 +91,24 @@ printStmt (If condExpr thenStmt (Just elseStmt)) = do
   pushScope
   printStmt elseStmt
   popScope
-printStmt (For preExprMaybe condExprMaybe postExprMaybe bodyStmt) = do
+printStmt (For preExprMaybe testExprMaybe postExprMaybe bodyStmt) = do
   emitLine $ mconcat
     [ "for ("
     , maybe "" (\preExpr -> showExpr preExpr <> " ") preExprMaybe
     , ";"
-    , maybe "" (\condExpr -> showExpr condExpr <> " ") condExprMaybe
+    , maybe "" (\testExpr -> showExpr testExpr <> " ") testExprMaybe
     , ";"
     , maybe "" (\postExpr -> showExpr postExpr <> " ") postExprMaybe
     , ")"
     ]
   printStmt bodyStmt
-printStmt (While condExpr bodyStmt) = do
-  emitLine $ "while (" <> showExpr condExpr <> ")"
+printStmt (While testExpr bodyStmt) = do
+  emitLine $ "while (" <> showExpr testExpr <> ")"
   printStmt bodyStmt
-printStmt (Do bodyStmt condExpr) = do
+printStmt (Do bodyStmt testExpr) = do
   emitLine "do"
   printStmt bodyStmt
-  emitLine $ "while (" <> showExpr condExpr <> ");"
+  emitLine $ "while (" <> showExpr testExpr <> ");"
 printStmt Break =
   emitLine "break;"
 printStmt Continue =

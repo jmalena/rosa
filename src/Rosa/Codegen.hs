@@ -162,7 +162,7 @@ emitBlockItem (BlockStmt stmt) =
   emitStmt stmt
 
 emitStmt :: Stmt -> Codegen ()
-emitStmt (ExprStmt maybeExpr) =
+emitStmt (StmtExpr maybeExpr) =
   forM_ maybeExpr $ \expr ->
     emitExpr "rax" expr
 emitStmt (Compound stmt) = do
@@ -171,20 +171,20 @@ emitStmt (Compound stmt) = do
   frame <- popFrame
   emit 2 $ "addq $" <> show (Frame.size frame) <> ", %rsp" -- stack dealloc
   return ()
-emitStmt (If condExpr thenStmt Nothing) = do
+emitStmt (If testExpr thenStmt Nothing) = do
   endLabel <- genLabel
   -- emit 2 $ "pushq %rax"
-  emitExpr "rax" condExpr
+  emitExpr "rax" testExpr
   emit 2 $ "cmpq $0, %rax"
   emit 2 $ "je " <> endLabel
   emitStmt thenStmt
   emit 0 $ endLabel <> ":"
   -- emit 2 $ "popq %rax"
-emitStmt (If condExpr thenStmt (Just elseStmt)) = do
+emitStmt (If testExpr thenStmt (Just elseStmt)) = do
   elseLabel <- genLabel
   endLabel <- genLabel
   -- emit 2 $ "pushq %rax"
-  emitExpr "rax" condExpr
+  emitExpr "rax" testExpr
   emit 2 $ "cmpq $0, %rax"
   emit 2 $ "je " <> elseLabel
   emitStmt thenStmt
@@ -193,35 +193,35 @@ emitStmt (If condExpr thenStmt (Just elseStmt)) = do
   emitStmt elseStmt
   emit 0 $ endLabel <> ":"
   -- emit 2 $ "popq %rax"
-emitStmt (For preExprMaybe condExprMaybe postExprMaybe bodyStmt) = do
+emitStmt (For preExprMaybe testExprMaybe postExprMaybe bodyStmt) = do
   loopLabel <- genLabel
   endLabel <- genLabel
   mapM_ (emitExpr "rax") preExprMaybe
   emit 0 $ loopLabel <> ":"
-  forM_ condExprMaybe $ \condExpr -> do
-    emitExpr "rax" condExpr
+  forM_ testExprMaybe $ \testExpr -> do
+    emitExpr "rax" testExpr
     emit 2 $ "cmpq $0, %rax"
     emit 2 $ "je " <> endLabel
   emitStmt bodyStmt
   mapM_ (emitExpr "rax") postExprMaybe
   emit 2 $ "jmp " <> loopLabel
   emit 0 $ endLabel <> ":"
-emitStmt (While condExpr bodyStmt) = do
+emitStmt (While testExpr bodyStmt) = do
   loopLabel <- genLabel
   endLabel <- genLabel
   emit 0 $ loopLabel <> ":"
-  emitExpr "rax" condExpr
+  emitExpr "rax" testExpr
   emit 2 $ "cmpq $0, %rax"
   emit 2 $ "je " <> endLabel
   emitStmt bodyStmt
   emit 2 $ "jmp " <> loopLabel
   emit 0 $ endLabel <> ":"
-emitStmt (Do bodyStmt condExpr) = do
+emitStmt (Do bodyStmt testExpr) = do
   loopLabel <- genLabel
   endLabel <- genLabel
   emit 0 $ loopLabel <> ":"
   emitStmt bodyStmt
-  emitExpr "rax" condExpr
+  emitExpr "rax" testExpr
   emit 2 $ "cmpq $0, %rax"
   emit 2 $ "je " <> endLabel
   emit 2 $ "jmp " <> loopLabel

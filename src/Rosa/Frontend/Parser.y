@@ -70,30 +70,28 @@ Program
 
 ExternDecl
     : int Ident '(' FuncParamDecls ')' ';'                                 { FuncDecl $2 $4 }
-    | int Ident '(' FuncParamDecls ')' '{' Block '}'                       { FuncDefn $2 $4 $7 }
+    | int Ident '(' FuncParamDecls ')' CompoundStmt                        { FuncDefn $2 $4 $6 }
 
-FuncParamDecls
+CompoundStmt
+    : '{' BlockList '}'                                                    { $2 }
+    
+BlockList
     : {- empty -}                                                          { [] }
-    | int Ident                                                            { [$2] }
-    | int Ident ',' FuncParamDecls                                         { $2:$4 }
-
-Block
-    : {- empty -}                                                          { [] }
-    | BlockItem Block                                                      { $1:$2 }
+    | BlockItem BlockList                                                  { $1:$2 }
 
 BlockItem
     : int Ident ';'                                                        { VarDecl $2 }
     | int Ident '=' Expr ';'                                               { VarDefn $2 $4 }
-    | Statement                                                            { BlockStmt $1 }
+    | Stmt                                                                 { BlockStmt $1 }
 
-Statement
-    : OptionalExpr ';'                                                     { ExprStmt $1 }
-    | '{' Block '}'                                                        { Compound $2 }
-    | if '(' Expr ')' Statement %prec THEN                                 { If $3 $5 Nothing }
-    | if '(' Expr ')' Statement else Statement                             { If $3 $5 (Just $7) }
-    | for '(' OptionalExpr ';' OptionalExpr ';' OptionalExpr ')' Statement { For $3 $5 $7 $9 }
-    | while '(' Expr ')' Statement                                         { While $3 $5 }
-    | do Statement while '(' Expr ')' ';'                                  { Do $2 $5 }
+Stmt
+    : OptionalExpr ';'                                                     { StmtExpr $1 }
+    | CompoundStmt                                                         { Compound $1 }
+    | if '(' Expr ')' Stmt %prec THEN                                      { If $3 $5 Nothing }
+    | if '(' Expr ')' Stmt else Stmt                                       { If $3 $5 (Just $7) }
+    | for '(' OptionalExpr ';' OptionalExpr ';' OptionalExpr ')' Stmt      { For $3 $5 $7 $9 }
+    | while '(' Expr ')' Stmt                                              { While $3 $5 }
+    | do Stmt while '(' Expr ')' ';'                                       { Do $2 $5 }
     | break ';'                                                            { Break }
     | continue ';'                                                         { Continue }
     | return Expr ';'                                                      { Return $2 }
@@ -102,6 +100,11 @@ OptionalExpr
     : {- empty -}                                                          { Nothing }
     | Expr                                                                 { Just $1 }
 
+FuncParamDecls
+    : {- empty -}                                                          { [] }
+    | int Ident                                                            { [$2] }
+    | int Ident ',' FuncParamDecls                                         { $2:$4 }
+    
 FuncCallArgs
     : {- empty -}                                                          { [] }
     | Expr                                                                 { [$1] }

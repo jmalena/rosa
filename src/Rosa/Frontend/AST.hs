@@ -23,24 +23,26 @@ import GHC.Generics (Generic)
 
 import Test.SmallCheck.Series
 
-data ExternDecl                                             -- external declaration, i.e. declaration outside of a function
-  = FuncDecl Ident [Ident]                                  -- function declaration, e.g., `int fun();`
-  | FuncDefn Ident [Ident] [BlockItem]                      -- function definition, e.g., `int fun() { return 0; }`
+-- | Top-level declaration in a program.
+-- Also it's called "external" because it's outside of a function.
+--
+-- Note: Every definition is also a declaration, but not every declaration
+-- is a definition.
+data ExternDecl
+  = -- | A named function declaration with list of parameters.
+    -- Example: `int fun();`
+    FuncDecl Ident [Ident]
+    -- | A named function definition with a list of parameters
+    -- and a compount statement representing function body.
+    -- Example: `int fun() { return 0; }`
+  | FuncDefn Ident [Ident] CompoundStmt
   deriving (Eq, Show, Generic)
 
 instance Monad m => Serial m ExternDecl
 
-data BlockItem
-  = VarDecl Ident                                           -- variable declaration, e.g., `int x;`
-  | VarDefn Ident Expr                                      -- variable definition, e.g. `int x = 1;`
-  | BlockStmt Stmt
-  deriving (Eq, Show, Generic)
-
-instance Monad m => Serial m BlockItem
-
 data Stmt
-  = ExprStmt (Maybe Expr)
-  | Compound [BlockItem]
+  = StmtExpr (Maybe Expr)
+  | Compound CompoundStmt
   | If Expr Stmt (Maybe Stmt)
   | For (Maybe Expr) (Maybe Expr) (Maybe Expr) Stmt
   | While Expr Stmt
@@ -51,6 +53,23 @@ data Stmt
   deriving (Eq, Show, Generic)
 
 instance Monad m => Serial m Stmt
+
+-- | A compound statement (also called a "block") is list of statements and variable
+-- declarations (see 'CompoundStmtItem'), enclosed in braces `{ ... }`.
+type CompoundStmt = [BlockItem]
+
+data BlockItem
+  = -- | A variable declaration with a name.
+    -- Example: `int x;`
+    VarDecl Ident
+    -- | A variable definition with a name and an initial value.
+    -- Example: `int x = 1;`
+  | VarDefn Ident Expr
+    -- | An nested statement.
+  | BlockStmt Stmt
+  deriving (Eq, Show, Generic)
+
+instance Monad m => Serial m BlockItem
 
 data Expr
   = NumLit Word64 -- TODO: replace with String or Text
