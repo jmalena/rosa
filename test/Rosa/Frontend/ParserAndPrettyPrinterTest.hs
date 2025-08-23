@@ -11,12 +11,12 @@ import Rosa.Frontend.PrettyPrinter
 import Test.Tasty
 import Test.Tasty.SmallCheck
 
-scprop_parsePrettyPrintIdempotence :: [Defn] -> Bool
+scprop_parsePrettyPrintIdempotence :: [ExternDecl] -> Bool
 scprop_parsePrettyPrintIdempotence ast =
   case parse (prettyPrint ast) of
     Right ast' -> ast == ast'
     Left _     -> False
 
-scprop_parsingValidInputSucceeds :: [Defn] -> Bool
+scprop_parsingValidInputSucceeds :: [ExternDecl] -> Bool
 scprop_parsingValidInputSucceeds =
   isRight . parse . prettyPrint

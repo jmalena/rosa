@@ -63,28 +63,27 @@ import Rosa.Frontend.Lexer
 %nonassoc else
 
 %%
-
 Program
     : {- empty -}                                                          { [] }
-    | FuncDecl                                                             { [$1] }
-    | FuncDecl Program                                                     { $1:$2 }
+    | ExternDecl                                                           { [$1] }
+    | ExternDecl Program                                                   { $1:$2 }
 
-FuncDecl
-    : int Ident '(' FuncDeclParams ')' ';'                                 { FuncDecl $2 $4 Nothing }
-    | int Ident '(' FuncDeclParams ')' '{' Block '}'                       { FuncDecl $2 $4 (Just $7) }
+ExternDecl
+    : int Ident '(' FuncParamDecls ')' ';'                                 { FuncDecl $2 $4 }
+    | int Ident '(' FuncParamDecls ')' '{' Block '}'                       { FuncDefn $2 $4 $7 }
 
-FuncDeclParams
+FuncParamDecls
     : {- empty -}                                                          { [] }
     | int Ident                                                            { [$2] }
-    | int Ident ',' FuncDeclParams                                         { $2:$4 }
+    | int Ident ',' FuncParamDecls                                         { $2:$4 }
 
 Block
     : {- empty -}                                                          { [] }
     | BlockItem Block                                                      { $1:$2 }
 
 BlockItem
-    : int Ident ';'                                                        { BlockDecl $2 Nothing }
-    | int Ident '=' Expr ';'                                               { BlockDecl $2 (Just $4) }
+    : int Ident ';'                                                        { VarDecl $2 }
+    | int Ident '=' Expr ';'                                               { VarDefn $2 $4 }
     | Statement                                                            { BlockStmt $1 }
 
 Statement
@@ -156,6 +155,6 @@ parseError :: ([Token], [String]) -> P a
 parseError (toks, _) = P $ \_ l ->
   Left ("Parse error on line " ++ show l ++ " near " ++ show toks)
 
-parse :: String -> Either String [Defn]
+parse :: String -> Either String [ExternDecl]
 parse s = runP (parseProgram (tokenize s)) "rosa" 1
 }

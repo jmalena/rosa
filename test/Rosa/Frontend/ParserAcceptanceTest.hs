@@ -36,16 +36,16 @@ unit_funcDecl_wParams =
 --------------------------------------------------------------------------------
 -- | Function Definitions
 
-unit_funcDef :: IO ()
-unit_funcDef =
+unit_funcDefn :: IO ()
+unit_funcDefn =
   assertValidProgram "int main() {}"
 
-unit_funcDef_wSemi :: IO ()
-unit_funcDef_wSemi =
+unit_funcDefn_wSemi :: IO ()
+unit_funcDefn_wSemi =
   assertInvalidProgram "int main() {};"
 
-unit_funcDef_woBlock :: IO ()
-unit_funcDef_woBlock =
+unit_funcDefn_woBlock :: IO ()
+unit_funcDefn_woBlock =
   assertInvalidProgram "int main() 0"
 
 --------------------------------------------------------------------------------
@@ -67,8 +67,8 @@ unit_varDecl_woSemi =
     }
   |]
 
-unit_multiVarDecl_FEATURE :: IO ()
-unit_multiVarDecl_FEATURE = pure ()
+unit_varDecl_multi_FEATURE :: IO ()
+unit_varDecl_multi_FEATURE = pure ()
 {-
   assertValidProgram [s|
     int main() {
@@ -77,8 +77,8 @@ unit_multiVarDecl_FEATURE = pure ()
   |]
 -}
 
-unit_multiLineVarDecl :: IO ()
-unit_multiLineVarDecl =
+unit_varDecl_multiLine :: IO ()
+unit_varDecl_multiLine =
   assertValidProgram [s|
     int main() {
       int a;
@@ -89,16 +89,16 @@ unit_multiLineVarDecl =
 --------------------------------------------------------------------------------
 -- | Variable Definitions
 
-unit_varDef :: IO ()
-unit_varDef =
+unit_varDefn :: IO ()
+unit_varDefn =
   assertValidProgram [s|
     int main() {
       int a = 1;
     }
   |]
 
-unit_multiVarDef_FEATURE :: IO ()
-unit_multiVarDef_FEATURE = pure ()
+unit_varDefn_multi_FEATURE :: IO ()
+unit_varDefn_multi_FEATURE = pure ()
 {-
   assertValidProgram [s|
     int main() {
@@ -107,8 +107,8 @@ unit_multiVarDef_FEATURE = pure ()
   |]
 -}
 
-unit_multiLineVarDef :: IO ()
-unit_multiLineVarDef =
+unit_varDefn_multiLine :: IO ()
+unit_varDefn_multiLine =
   assertValidProgram [s|
     int main() {
       int a = 1;

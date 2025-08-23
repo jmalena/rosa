@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Rosa.Frontend.AST (
-  Defn(..),
+  ExternDecl(..),
   BlockItem(..),
   Stmt(..),
   Expr(..),
@@ -23,14 +23,16 @@ import GHC.Generics (Generic)
 
 import Test.SmallCheck.Series
 
-data Defn
-  = FuncDecl Ident [Ident] (Maybe [BlockItem])
+data ExternDecl                                             -- external declaration, i.e. declaration outside of a function
+  = FuncDecl Ident [Ident]                                  -- function declaration, e.g., `int fun();`
+  | FuncDefn Ident [Ident] [BlockItem]                      -- function definition, e.g., `int fun() { return 0; }`
   deriving (Eq, Show, Generic)
 
-instance Monad m => Serial m Defn
+instance Monad m => Serial m ExternDecl
 
 data BlockItem
-  = BlockDecl Ident (Maybe Expr)
+  = VarDecl Ident                                           -- variable declaration, e.g., `int x;`
+  | VarDefn Ident Expr                                      -- variable definition, e.g. `int x = 1;`
   | BlockStmt Stmt
   deriving (Eq, Show, Generic)
 

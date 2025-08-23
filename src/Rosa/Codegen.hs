@@ -114,23 +114,23 @@ findVarOffset ident = do
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-codegen :: [Defn] -> Codegen ()
+codegen :: [ExternDecl] -> Codegen ()
 codegen defns = do
   emit 0 $ ".global _main"
   emit 0 ""
-  mapM_ emitDefn defns
+  mapM_ emitExternDecl defns
 
-emitDefn :: Defn -> Codegen ()
-emitDefn (FuncDecl ident params Nothing) =
+emitExternDecl :: ExternDecl -> Codegen ()
+emitExternDecl (FuncDecl ident params) =
   findFunctionSignature ident >>= \case
     Just _ ->
-      error $ "Error: function \"" <> getRawIdent ident <> "\" is already defined."
+      error $ "Error: function \"" <> getRawIdent ident <> "\" is already declared."
     Nothing ->
       introduceFunction ident params
-emitDefn (FuncDecl ident params (Just body)) =
+emitExternDecl (FuncDefn ident params body) =
   findFunctionSignature ident >>= \case
     Just _ ->
-      error $ "Error: function \"" <> getRawIdent ident <> "\" is already defined."
+      error $ "Error: function \"" <> getRawIdent ident <> "\" is already declared."
     Nothing -> do
       emit 0 $ "_" <> getRawIdent ident <> ":"
       pushFrame Frame.empty
@@ -149,15 +149,15 @@ emitDefn (FuncDecl ident params (Just body)) =
       emit 0 ""
 
 emitBlockItem :: BlockItem -> Codegen ()
-emitBlockItem (BlockDecl ident maybeExpr) = do
+emitBlockItem (VarDecl ident) = do
   offset <- stateCurrentFrame Frame.alloc64
   modifyCurrentFrame $ Frame.markVar ident offset
-  case maybeExpr of
-    Nothing ->
-      emit 2 "pushq $0"
-    Just expr -> do
-      emitExpr "rax" expr
-      emit 2 "pushq %rax"
+  emit 2 "pushq $0"
+emitBlockItem (VarDefn ident expr) = do
+  offset <- stateCurrentFrame Frame.alloc64
+  modifyCurrentFrame $ Frame.markVar ident offset
+  emitExpr "rax" expr
+  emit 2 "pushq %rax"
 emitBlockItem (BlockStmt stmt) =
   emitStmt stmt
 

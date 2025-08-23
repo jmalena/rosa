@@ -19,8 +19,8 @@ data PrinterState = PrinterState
 newtype Printer a = Printer { runPrinter :: State PrinterState a }
   deriving (Functor, Applicative, Monad, MonadState PrinterState)
 
-prettyPrint :: [Defn] -> String
-prettyPrint = code . flip execState printerState . runPrinter . printDefns
+prettyPrint :: [ExternDecl] -> String
+prettyPrint = code . flip execState printerState . runPrinter . printExternDecls
   where printerState = PrinterState { code = "", indent = 0 }
 
 emitLine :: String -> Printer ()
@@ -38,16 +38,16 @@ popScope =
 
 --------------------------------------------------------------------------------
 
-printDefns :: [Defn] -> Printer ()
-printDefns defns =
-  forM_ defns $ \defn -> do
-    printDefn defn
+printExternDecls :: [ExternDecl] -> Printer ()
+printExternDecls decls =
+  forM_ decls $ \decl -> do
+    printExternDecl decl
     emitLine ""
 
-printDefn :: Defn -> Printer ()
-printDefn (FuncDecl ident params Nothing) =
+printExternDecl :: ExternDecl -> Printer ()
+printExternDecl (FuncDecl ident params) =
   emitLine $ "int " <> getRawIdent ident <> "(" <> showFuncParams params <> ");"
-printDefn (FuncDecl ident params (Just body)) = do
+printExternDecl (FuncDefn ident params body) = do
   emitLine $ "int " <> getRawIdent ident <> "(" <> showFuncParams params <> ") {"
   pushScope
   mapM_ printBlockItem body
@@ -59,9 +59,9 @@ showFuncParams =
   intercalate ", " . fmap (("int " <>) . getRawIdent)
 
 printBlockItem :: BlockItem -> Printer ()
-printBlockItem (BlockDecl ident Nothing) =
+printBlockItem (VarDecl ident) =
   emitLine $ "int " <> getRawIdent ident <> ";"
-printBlockItem (BlockDecl ident (Just expr)) =
+printBlockItem (VarDefn ident expr) =
   emitLine $ "int " <> getRawIdent ident <> "=" <> showExpr expr <> ";"
 printBlockItem (BlockStmt stmt) =
   printStmt stmt
