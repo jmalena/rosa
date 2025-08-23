@@ -18,17 +18,17 @@ main = run =<< execParser opts
   where
     opts = info (options <**> helper)
       ( fullDesc
-     <> progDesc "ROSA, C language compiler." )
+     <> progDesc "Rosa Language Compiler." )
     options = Options
       <$> argument str
           ( metavar "INPUT"
-         <> help "Where to load C source code file." )
+         <> help "Path to the Rosa source file." )
       <*> strOption
           ( long "output"
          <> short 'o'
          <> showDefault
          <> value "./out"
-         <> help "Where to put compiled executable." )
+         <> help "Path of the output executable." )
 
 run :: Options -> IO ()
 run (Options { inputFile, outputFile }) = do
