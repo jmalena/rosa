@@ -50,8 +50,9 @@ executable rosa
 test-suite rosa-test
     import:             warnings
     default-language:   Haskell2010
-    other-modules:      Rosa.Frontend.LiteralParserTest,
-                        Rosa.Frontend.ParserAndPrettyPrinterTest
+    other-modules:      Rosa.Frontend.ParserAndPrettyPrinterTest,
+                        Rosa.Frontend.ParserAcceptanceTest,
+                        Rosa.Frontend.LiteralParserTest
     -- other-extensions:
     type:               exitcode-stdio-1.0
     hs-source-dirs:     test
@@ -60,5 +61,6 @@ test-suite rosa-test
                         tasty >=1.5 && <1.6,
                         tasty-hunit >=0.10 && <0.11,
                         tasty-smallcheck >=0.8 && <0.9,
+                        string-qq >=0.0 && <0.1,
                         rosa
     build-tool-depends: tasty-discover:tasty-discover >=5.1 && <5.2
