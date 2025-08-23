@@ -162,7 +162,7 @@ emitBlockItem (BlockStmt stmt) =
   emitStmt stmt
 
 emitStmt :: Stmt -> Codegen ()
-emitStmt (SideEff maybeExpr) =
+emitStmt (ExprStmt maybeExpr) =
   forM_ maybeExpr $ \expr ->
     emitExpr "rax" expr
 emitStmt (Compound stmt) = do

@@ -67,9 +67,9 @@ printBlockItem (BlockStmt stmt) =
   printStmt stmt
 
 printStmt :: Stmt -> Printer ()
-printStmt (SideEff Nothing) =
+printStmt (ExprStmt Nothing) =
   emitLine ";"
-printStmt (SideEff (Just expr)) =
+printStmt (ExprStmt (Just expr)) =
   emitLine $ showExpr expr <> ";"
 printStmt (Compound stmt) = do
   emitLine "{"

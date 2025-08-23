@@ -88,7 +88,7 @@ BlockItem
     | Statement                                                            { BlockStmt $1 }
 
 Statement
-    : OptionalExpr ';'                                                     { SideEff $1 }
+    : OptionalExpr ';'                                                     { ExprStmt $1 }
     | '{' Block '}'                                                        { Compound $2 }
     | if '(' Expr ')' Statement %prec THEN                                 { If $3 $5 Nothing }
     | if '(' Expr ')' Statement else Statement                             { If $3 $5 (Just $7) }

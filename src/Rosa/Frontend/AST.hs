@@ -37,7 +37,7 @@ data BlockItem
 instance Monad m => Serial m BlockItem
 
 data Stmt
-  = SideEff (Maybe Expr) -- TODO: Rename SideEff to something like e.g. "SExpr"!
+  = ExprStmt (Maybe Expr)
   | Compound [BlockItem]
   | If Expr Stmt (Maybe Stmt)
   | For (Maybe Expr) (Maybe Expr) (Maybe Expr) Stmt
