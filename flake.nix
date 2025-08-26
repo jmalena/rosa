@@ -14,21 +14,23 @@
         hsPkgs = pkgs.haskell.packages.${ghcVersion};
         rosaPkg = hsPkgs.callCabal2nix "rosa" ./. {};
       in {
+        # nix build
+        packages.default = rosaPkg;
+
         # nix develop
         devShells.default = hsPkgs.shellFor {
           packages = p: [ rosaPkg ];
-          buildInputs = with pkgs; [
-            # bin
-            rosaPkg
-
-            # tools
+          nativeBuildInputs = with pkgs; [
             cabal-install
-            ghcid
+            ghciwatch
           ];
+          shellHook = ''
+            echo "Welcome to the Rosa compiler development environment!"
+            echo "  ➤ Use 'cabal' to build, test, and run the project."
+            echo "  ➤ Use 'dev-watch' for live reloading with ghciwatch."
+            alias dev-watch='ghciwatch --command "cabal repl"'
+          '';
         };
-
-        # nix build
-        packages.default = rosaPkg;
       }
     );
 }
