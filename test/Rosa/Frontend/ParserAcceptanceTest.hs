@@ -13,45 +13,45 @@ import Rosa.Frontend.Parser (parse)
 --------------------------------------------------------------------------------
 -- | Function Declarations
 
-unit_funcDecl :: IO ()
+unit_funcDecl :: Assertion
 unit_funcDecl =
   assertValidProgram "int main();"
 
-unit_funcDecl_woSemi :: IO ()
+unit_funcDecl_woSemi :: Assertion
 unit_funcDecl_woSemi =
   assertInvalidProgram "int main()"
 
-unit_funcDecl_wParam :: IO ()
+unit_funcDecl_wParam :: Assertion
 unit_funcDecl_wParam =
   assertValidProgram "int main(int param1);"
 
-unit_funcDecl_wParam_woType :: IO ()
+unit_funcDecl_wParam_woType :: Assertion
 unit_funcDecl_wParam_woType =
   assertInvalidProgram "int main(param1);"
 
-unit_funcDecl_wParams :: IO ()
+unit_funcDecl_wParams :: Assertion
 unit_funcDecl_wParams =
   assertValidProgram "int main(int param1, int param2);"
 
 --------------------------------------------------------------------------------
 -- | Function Definitions
 
-unit_funcDefn :: IO ()
+unit_funcDefn :: Assertion
 unit_funcDefn =
   assertValidProgram "int main() {}"
 
-unit_funcDefn_wSemi :: IO ()
+unit_funcDefn_wSemi :: Assertion
 unit_funcDefn_wSemi =
   assertInvalidProgram "int main() {};"
 
-unit_funcDefn_woBlock :: IO ()
+unit_funcDefn_woBlock :: Assertion
 unit_funcDefn_woBlock =
   assertInvalidProgram "int main() 0"
 
 --------------------------------------------------------------------------------
 -- | Variable Declaractions
 
-unit_varDecl :: IO ()
+unit_varDecl :: Assertion
 unit_varDecl =
   assertValidProgram [s|
     int main() {
@@ -59,7 +59,7 @@ unit_varDecl =
     }
   |]
 
-unit_varDecl_woSemi :: IO ()
+unit_varDecl_woSemi :: Assertion
 unit_varDecl_woSemi =
   assertInvalidProgram [s|
     int main() {
@@ -67,7 +67,7 @@ unit_varDecl_woSemi =
     }
   |]
 
-unit_varDecl_multi_FEATURE :: IO ()
+unit_varDecl_multi_FEATURE :: Assertion
 unit_varDecl_multi_FEATURE = pure ()
 {-
   assertValidProgram [s|
@@ -77,7 +77,7 @@ unit_varDecl_multi_FEATURE = pure ()
   |]
 -}
 
-unit_varDecl_multiLine :: IO ()
+unit_varDecl_multiLine :: Assertion
 unit_varDecl_multiLine =
   assertValidProgram [s|
     int main() {
@@ -89,7 +89,7 @@ unit_varDecl_multiLine =
 --------------------------------------------------------------------------------
 -- | Variable Definitions
 
-unit_varDefn :: IO ()
+unit_varDefn :: Assertion
 unit_varDefn =
   assertValidProgram [s|
     int main() {
@@ -97,7 +97,7 @@ unit_varDefn =
     }
   |]
 
-unit_varDefn_multi_FEATURE :: IO ()
+unit_varDefn_multi_FEATURE :: Assertion
 unit_varDefn_multi_FEATURE = pure ()
 {-
   assertValidProgram [s|
@@ -107,7 +107,7 @@ unit_varDefn_multi_FEATURE = pure ()
   |]
 -}
 
-unit_varDefn_multiLine :: IO ()
+unit_varDefn_multiLine :: Assertion
 unit_varDefn_multiLine =
   assertValidProgram [s|
     int main() {
@@ -119,7 +119,7 @@ unit_varDefn_multiLine =
 --------------------------------------------------------------------------------
 -- | Expr Statements
 
-unit_exprStmt :: IO ()
+unit_exprStmt :: Assertion
 unit_exprStmt =
   assertValidProgram [s|
     int main() {
@@ -130,7 +130,7 @@ unit_exprStmt =
 --------------------------------------------------------------------------------
 -- | If-then Statements
 
-unit_ifStmt_wEmptyExprStmt :: IO ()
+unit_ifStmt_wEmptyExprStmt :: Assertion
 unit_ifStmt_wEmptyExprStmt =
   assertValidProgram [s|
     int main() {
@@ -138,7 +138,7 @@ unit_ifStmt_wEmptyExprStmt =
     }
   |]
   
-unit_ifStmt_wExprStmt :: IO ()
+unit_ifStmt_wExprStmt :: Assertion
 unit_ifStmt_wExprStmt =
   assertValidProgram [s|
     int main() {
@@ -146,7 +146,7 @@ unit_ifStmt_wExprStmt =
     }
   |]
   
-unit_ifStmt_wEmptyThenBlock :: IO ()
+unit_ifStmt_wEmptyThenBlock :: Assertion
 unit_ifStmt_wEmptyThenBlock =
   assertValidProgram [s|
     int main() {
@@ -154,7 +154,7 @@ unit_ifStmt_wEmptyThenBlock =
     }
   |]
 
-unit_ifStmt_woTestExpr :: IO ()
+unit_ifStmt_woTestExpr :: Assertion
 unit_ifStmt_woTestExpr =
   assertInvalidProgram [s|
     int main() {
@@ -162,7 +162,7 @@ unit_ifStmt_woTestExpr =
     }
   |]
   
-unit_ifStmt_woThen :: IO ()
+unit_ifStmt_woThen :: Assertion
 unit_ifStmt_woThen =
   assertInvalidProgram [s|
     int main() {
@@ -170,7 +170,7 @@ unit_ifStmt_woThen =
     }
   |]
 
-unit_ifStmt_wDeclInThen :: IO ()
+unit_ifStmt_wDeclInThen :: Assertion
 unit_ifStmt_wDeclInThen =
   assertInvalidProgram [s|
     int main() {
@@ -178,7 +178,7 @@ unit_ifStmt_wDeclInThen =
     }
   |]
 
-unit_ifStmt_wDefnInThen :: IO ()
+unit_ifStmt_wDefnInThen :: Assertion
 unit_ifStmt_wDefnInThen =
   assertInvalidProgram [s|
     int main() {
