@@ -1,95 +1,102 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Rosa.Frontend.AST (
   ExternDecl(..),
-  BlockItem(..),
+  ScopedStmt(..),
   Stmt(..),
   Expr(..),
   UnaryOp(..),
   BinaryOp(..),
   Ident,
-  mkIdent,
-  getRawIdent,
-  precOver
+  precOver,
+  Parsed(..),
+  Typed(..)
 ) where
 
 import Data.Char
 import Data.List
 import Data.Word
 
-import GHC.Generics (Generic)
+--------------------------------------------------------------------------------
+-- | AST Phases (for reference see paper "Trees that Grow")
 
-import Test.SmallCheck.Series
+data Parsed
+data Typed
 
--- | Top-level declaration in a program.
--- Also it's called "external" because it's outside of a function.
+type family XExternDecl p
+type family XStmt p
+type family XScopedStmt p
+type family XExpr p
+
+type instance XExternDecl Parsed = ()
+type instance XExternDecl Typed  = ()
+type instance XStmt Parsed       = ()
+type instance XStmt Typed        = ()
+type instance XScopedStmt Parsed = ()
+type instance XScopedStmt Typed  = ()
+type instance XExpr Parsed       = ()
+type instance XExpr Typed        = ()
+
+--------------------------------------------------------------------------------
+-- | AST
 --
 -- Note: Every definition is also a declaration, but not every declaration
 -- is a definition.
-data ExternDecl
+
+-- | Top-level declaration in a program ("external" to any function body).
+-- Every constructor carries phase-specific metadata via 'XExternDecl p'.
+data ExternDecl p
   = -- | A named function declaration with list of parameters.
     -- Example: `int fun();`
-    FuncDecl Ident [Ident]
+    FuncDecl (XExternDecl p) Ident [Ident]
     -- | A named function definition with a list of parameters
     -- and a compount statement representing function body.
     -- Example: `int fun() { return 0; }`
-  | FuncDefn Ident [Ident] CompoundStmt
-  deriving (Eq, Show, Generic)
+  | FuncDefn (XExternDecl p) Ident [Ident] (BlockStmt p)
 
-instance Monad m => Serial m ExternDecl
+-- | 'Stmt' supportings local variable declaration.
+data ScopedStmt p
+  = VarDecl (XScopedStmt p) Ident
+    -- | Example: `int x;`
+  | VarDefn (XScopedStmt p) Ident (Expr p)
+    -- | Example: `int x = 1;`
+  | Stmt (XScopedStmt p) (Stmt p)
+    -- | A nested statement
 
-data Stmt
-  = StmtExpr (Maybe Expr)
-  | Compound CompoundStmt
-  | If Expr Stmt (Maybe Stmt)
-  | For (Maybe Expr) (Maybe Expr) (Maybe Expr) Stmt
-  | While Expr Stmt
-  | Do Stmt Expr
-  | Break
-  | Continue
-  | Return Expr
-  deriving (Eq, Show, Generic)
+-- | Statement.
+data Stmt p
+  = If (XStmt p) (Expr p) (Stmt p) (Maybe (Stmt p))
+  | For (XStmt p) (Maybe (Expr p)) (Maybe (Expr p)) (Maybe (Expr p)) (Stmt p)
+  | While (XStmt p) (Expr p) (Stmt p)
+  | Do (XStmt p) (Stmt p) (Expr p)
+  | Break (XStmt p)
+  | Continue (XStmt p)
+  | Return (XStmt p) (Expr p)
+  | Block (XStmt p) (BlockStmt p)
+  | Expr (XStmt p) (Expr p)
+  | Noop (XStmt p)
 
-instance Monad m => Serial m Stmt
+-- | Block statement (also known as "Compound statement") is a list of 'ScopedStmt' enclosed in `{ ... }`.
+type BlockStmt p = [ScopedStmt p]
 
--- | A compound statement (also called a "block") is list of statements and variable
--- declarations (see 'CompoundStmtItem'), enclosed in braces `{ ... }`.
-type CompoundStmt = [BlockItem]
-
-data BlockItem
-  = -- | A variable declaration with a name.
-    -- Example: `int x;`
-    VarDecl Ident
-    -- | A variable definition with a name and an initial value.
-    -- Example: `int x = 1;`
-  | VarDefn Ident Expr
-    -- | An nested statement.
-  | BlockStmt Stmt
-  deriving (Eq, Show, Generic)
-
-instance Monad m => Serial m BlockItem
-
-data Expr
-  = NumLit Word64 -- TODO: replace with String or Text
-  --StrLit String -- FIXME: Comming soon!
-  | Ref Ident
-  | Assign Ident Expr
-  | FuncCall Ident [Expr]
-  | UnaryOp UnaryOp Expr
-  | BinaryOp BinaryOp Expr Expr
-  deriving (Eq, Show, Generic)
-
-instance Monad m => Serial m Expr
+-- | Expressions
+data Expr p
+  = NumLit (XExpr p) Word64 -- TODO: replace Word64 with String or Text
+  | Ref (XExpr p) Ident
+  | Assign (XExpr p) Ident (Expr p)
+  | FuncCall (XExpr p) Ident [Expr p]
+  | UnaryOp (XExpr p) UnaryOp (Expr p)
+  | BinaryOp (XExpr p) BinaryOp (Expr p) (Expr p)
 
 data UnaryOp
   = OpBitCompl
   | OpLogCompl
   | OpAddCompl
-  deriving (Eq, Show, Generic)
-
-instance Monad m => Serial m UnaryOp
 
 data BinaryOp
   = OpMul
@@ -104,29 +111,11 @@ data BinaryOp
   | OpNEQ
   | OpLogAnd
   | OpLogOr
-  deriving (Eq, Show, Generic)
 
-instance Monad m => Serial m BinaryOp
-
---------------------------------------------------------------------------------
--- | Ident
-
-newtype Ident = Ident { getRawIdent :: String }
-  deriving (Eq, Ord, Show)
-
-instance Monad m => Serial m Ident where
-  series = generate $ \d -> [Ident "a"]
-
-mkIdent :: String -> Maybe Ident
-mkIdent "" = Nothing
-mkIdent s = if isValid s then Just (Ident s) else Nothing
-  where
-    isValid (x:xs) =
-      (isAlpha x || x == '_')
-      && all (\x -> isAlpha x || isDigit x || x == '_') xs
+type Ident = String
 
 --------------------------------------------------------------------------------
--- | Precedence
+-- Precedence
 
 class Precedence a where
   prec :: a -> Int

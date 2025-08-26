@@ -69,32 +69,33 @@ Program
     | ExternDecl Program                                                   { $1:$2 }
 
 ExternDecl
-    : int Ident '(' FuncParamDecls ')' ';'                                 { FuncDecl $2 $4 }
-    | int Ident '(' FuncParamDecls ')' CompoundStmt                        { FuncDefn $2 $4 $6 }
+    : int Ident '(' FuncParamDecls ')' ';'                                 { FuncDecl () $2 $4 }
+    | int Ident '(' FuncParamDecls ')' BlockStmt                           { FuncDefn () $2 $4 $6 }
 
-CompoundStmt
-    : '{' BlockList '}'                                                    { $2 }
+BlockStmt
+    : '{' ScopedStmts '}'                                                  { $2 }
     
-BlockList
+ScopedStmts
     : {- empty -}                                                          { [] }
-    | BlockItem BlockList                                                  { $1:$2 }
+    | ScopedStmt ScopedStmts                                               { $1:$2 }
 
-BlockItem
-    : int Ident ';'                                                        { VarDecl $2 }
-    | int Ident '=' Expr ';'                                               { VarDefn $2 $4 }
-    | Stmt                                                                 { BlockStmt $1 }
+ScopedStmt
+    : int Ident ';'                                                        { VarDecl () $2 }
+    | int Ident '=' Expr ';'                                               { VarDefn () $2 $4 }
+    | Stmt                                                                 { Stmt () $1 }
 
 Stmt
-    : OptionalExpr ';'                                                     { StmtExpr $1 }
-    | CompoundStmt                                                         { Compound $1 }
-    | if '(' Expr ')' Stmt %prec THEN                                      { If $3 $5 Nothing }
-    | if '(' Expr ')' Stmt else Stmt                                       { If $3 $5 (Just $7) }
-    | for '(' OptionalExpr ';' OptionalExpr ';' OptionalExpr ')' Stmt      { For $3 $5 $7 $9 }
-    | while '(' Expr ')' Stmt                                              { While $3 $5 }
-    | do Stmt while '(' Expr ')' ';'                                       { Do $2 $5 }
-    | break ';'                                                            { Break }
-    | continue ';'                                                         { Continue }
-    | return Expr ';'                                                      { Return $2 }
+    : if '(' Expr ')' Stmt %prec THEN                                      { If () $3 $5 Nothing }
+    | if '(' Expr ')' Stmt else Stmt                                       { If () $3 $5 (Just $7) }
+    | for '(' OptionalExpr ';' OptionalExpr ';' OptionalExpr ')' Stmt      { For () $3 $5 $7 $9 }
+    | while '(' Expr ')' Stmt                                              { While () $3 $5 }
+    | do Stmt while '(' Expr ')' ';'                                       { Do () $2 $5 }
+    | break ';'                                                            { Break () }
+    | continue ';'                                                         { Continue () }
+    | return Expr ';'                                                      { Return () $2 }
+    | BlockStmt                                                            { Block () $1 }
+    | Expr ';'                                                             { Expr () $1 }
+    | ';'                                                                  { Noop () }
 
 OptionalExpr
     : {- empty -}                                                          { Nothing }
@@ -111,29 +112,29 @@ FuncCallArgs
     | Expr ',' FuncCallArgs                                                { $1:$3 }
 
 Expr
-    : Ident '(' FuncCallArgs ')' %prec FUNC_CALL                           { FuncCall $1 $3 }
-    | '-' Expr %prec UNARY_MINUS                                           { UnaryOp OpAddCompl $2 }
-    | '!' Expr                                                             { UnaryOp OpLogCompl $2 }
-    | '~' Expr                                                             { UnaryOp OpBitCompl $2 }
-    | Expr '+' Expr                                                        { BinaryOp OpAdd $1 $3 }
-    | Expr '-' Expr                                                        { BinaryOp OpSub $1 $3 }
-    | Expr '*' Expr                                                        { BinaryOp OpMul $1 $3 }
-    | Expr '/' Expr                                                        { BinaryOp OpDiv $1 $3 }
-    | Expr "<=" Expr                                                       { BinaryOp OpLTE $1 $3 }
-    | Expr "<" Expr                                                        { BinaryOp OpLT $1 $3 }
-    | Expr ">=" Expr                                                       { BinaryOp OpGTE $1 $3 }
-    | Expr ">" Expr                                                        { BinaryOp OpGT $1 $3 }
-    | Expr "==" Expr                                                       { BinaryOp OpEQ $1 $3 }
-    | Expr "!=" Expr                                                       { BinaryOp OpNEQ $1 $3 }
-    | Expr "&&" Expr                                                       { BinaryOp OpLogAnd $1 $3 }
-    | Expr "||" Expr                                                       { BinaryOp OpLogOr $1 $3 }
+    : Ident '(' FuncCallArgs ')' %prec FUNC_CALL                           { FuncCall () $1 $3 }
+    | '-' Expr %prec UNARY_MINUS                                           { UnaryOp () OpAddCompl $2 }
+    | '!' Expr                                                             { UnaryOp () OpLogCompl $2 }
+    | '~' Expr                                                             { UnaryOp () OpBitCompl $2 }
+    | Expr '+' Expr                                                        { BinaryOp () OpAdd $1 $3 }
+    | Expr '-' Expr                                                        { BinaryOp () OpSub $1 $3 }
+    | Expr '*' Expr                                                        { BinaryOp () OpMul $1 $3 }
+    | Expr '/' Expr                                                        { BinaryOp () OpDiv $1 $3 }
+    | Expr "<=" Expr                                                       { BinaryOp () OpLTE $1 $3 }
+    | Expr "<" Expr                                                        { BinaryOp () OpLT $1 $3 }
+    | Expr ">=" Expr                                                       { BinaryOp () OpGTE $1 $3 }
+    | Expr ">" Expr                                                        { BinaryOp () OpGT $1 $3 }
+    | Expr "==" Expr                                                       { BinaryOp () OpEQ $1 $3 }
+    | Expr "!=" Expr                                                       { BinaryOp () OpNEQ $1 $3 }
+    | Expr "&&" Expr                                                       { BinaryOp () OpLogAnd $1 $3 }
+    | Expr "||" Expr                                                       { BinaryOp () OpLogOr $1 $3 }
     | '(' Expr ')'                                                         { $2 }
-    | Ident '=' Expr                                                       { Assign $1 $3 }
-    | Ident                                                                { Ref $1 }
-    | LIT                                                                  { NumLit $1 }
+    | Ident '=' Expr                                                       { Assign () $1 $3 }
+    | Ident                                                                { Ref () $1 }
+    | LIT                                                                  { NumLit () $1 }
 
 Ident
-    : IDENT                                                                { fromJust (mkIdent $1) }
+    : IDENT                                                                { $1 }
 
 {
 newtype P a = P { runP :: String -> Int -> Either String a }
@@ -158,6 +159,6 @@ parseError :: ([Token], [String]) -> P a
 parseError (toks, _) = P $ \_ l ->
   Left ("Parse error on line " ++ show l ++ " near " ++ show toks)
 
-parse :: String -> Either String [ExternDecl]
+parse :: String -> Either String [ExternDecl Parsed]
 parse s = runP (parseProgram (tokenize s)) "rosa" 1
 }

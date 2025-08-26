@@ -4,8 +4,6 @@ module Main where
 
 import Options.Applicative
 
-import Rosa.Compiler
-
 import System.Process
 
 data Options = Options
@@ -33,10 +31,4 @@ main = run =<< execParser opts
 run :: Options -> IO ()
 run (Options { inputFile, outputFile }) = do
   source <- readFile inputFile
-  case compile source of
-    Left err -> error err
-    Right asm -> do
-      let asmFile = outputFile <> ".s"
-      writeFile asmFile asm
-      _ <- runCommand $ "gcc " <> asmFile <> " -o '" <> outputFile <> "'"
-      return ()
+  error "unimplemented"

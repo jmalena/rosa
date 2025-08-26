@@ -204,4 +204,4 @@ assertInvalidProgram s =
   case parse s of
     (Left _) -> pure ()
     (Right ast) ->
-      assertFailure $ "Expect following string to not be a valid program:\n\n  " ++ show s ++ "\n\nbut it got parsed as:\n\n  " ++ show ast
+      assertFailure $ "Expect following string to not be a valid program:\n\n  " ++ show s
