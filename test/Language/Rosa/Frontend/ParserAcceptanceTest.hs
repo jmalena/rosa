@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Rosa.Frontend.ParserAcceptanceTest where
+module Language.Rosa.Frontend.ParserAcceptanceTest where
 
 import Data.String.QQ
 
 import Test.Tasty
 import Test.Tasty.HUnit
 
-import Rosa.Frontend.Parser (parse)
+import Language.Rosa.Frontend.Parser (parse)
 
 --------------------------------------------------------------------------------
 -- | Function Declarations

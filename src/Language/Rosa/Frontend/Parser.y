@@ -1,12 +1,12 @@
 {
-module Rosa.Frontend.Parser (
+module Language.Rosa.Frontend.Parser (
   parse
 ) where
 
 import Data.Maybe
 
-import Rosa.Frontend.AST
-import Rosa.Frontend.Lexer
+import Language.Rosa.Frontend.AST
+import Language.Rosa.Frontend.Lexer
 }
 
 %name parseProgram Program

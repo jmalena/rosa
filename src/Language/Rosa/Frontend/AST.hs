@@ -5,7 +5,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module Rosa.Frontend.AST (
+module Language.Rosa.Frontend.AST (
   ExternDecl(..),
   ScopedStmt(..),
   Stmt(..),
