@@ -1,15 +1,16 @@
 {
-module Language.Rosa.Frontend.Parser (
-  parse
+module Language.Rosa.Parser.Parser (
+  componentP
 ) where
 
-import Data.Maybe
-
-import Language.Rosa.Frontend.AST
-import Language.Rosa.Frontend.Lexer
+import Language.Rosa.Syntax.AST
+import Language.Rosa.Syntax.Operators
+import Language.Rosa.Syntax.Stages
+import Language.Rosa.Parser.Lexer
 }
 
-%name parseProgram Program
+%name component component
+
 %tokentype { Token }
 
 %monad { P }
@@ -17,38 +18,37 @@ import Language.Rosa.Frontend.Lexer
 %error { parseError }
 
 %token
-  '('      { TokenLParen }
-  ')'      { TokenRParen }
-  '{'      { TokenLBracket }
-  '}'      { TokenRBracket }
-  ';'      { TokenSemi }
-  '~'      { TokenBitCompl }
-  '!'      { TokenLogCompl }
-  '*'      { TokenMul }
-  '/'      { TokenDiv }
-  '+'      { TokenPlus }
-  '-'      { TokenMinus }
-  "<="     { TokenLTE }
-  "<"      { TokenLT }
-  ">="     { TokenGTE }
-  ">"      { TokenGT }
-  "=="     { TokenEQ }
-  "!="     { TokenNEQ }
-  "&&"     { TokenLogAnd }
-  "||"     { TokenLogOr }
-  '='      { TokenAssign }
-  if       { TokenIfKeyword }
-  else     { TokenElseKeyword }
-  for      { TokenFor }
-  while    { TokenWhile }
-  do       { TokenDo }
-  break    { TokenBreak }
-  continue { TokenContinue }
-  return   { TokenRetKeyword }
-  int      { TokenIntKeyword }
-  LIT      { TokenLit $$ }
-  IDENT    { TokenIdent $$ }
-  ','      { TokenComma }
+  '('      { TokLPar }
+  ')'      { TokRPar }
+  '{'      { TokLBra }
+  '}'      { TokRBra }
+  ';'      { TokSemi }
+  '!'      { TokNeg }
+  '*'      { TokMul }
+  '/'      { TokDiv }
+  '+'      { TokPlus }
+  '-'      { TokMinus }
+  "<"      { TokLt }
+  ">"      { TokGt }
+  "<="     { TokLte }
+  ">="     { TokGte }
+  "=="     { TokEq }
+  "!="     { TokNeq }
+  "&&"     { TokAnd }
+  "||"     { TokOr }
+  '='      { TokAssign }
+  if       { TokIf }
+  else     { TokElse }
+  for      { TokFor }
+  while    { TokWhile }
+  do       { TokDo }
+  break    { TokBreak }
+  continue { TokContinue }
+  return   { TokRet }
+  int      { TokInt }
+  LIT      { TokLit $$ }
+  IDENT    { TokIdent $$ }
+  ','      { TokComma }
 
 %left ','
 %right '='
@@ -58,17 +58,17 @@ import Language.Rosa.Frontend.Lexer
 %left "<=" "<" ">=" ">"
 %left '+' '-'
 %left '*' '/'
-%right UNARY_MINUS '!' '~' FUNC_CALL
+%right UNARY_PLUS UNARY_MINUS '!' FUNC_CALL
 %nonassoc THEN
 %nonassoc else
 
 %%
-Program
+component
     : {- empty -}                                                          { [] }
-    | ExternDecl                                                           { [$1] }
-    | ExternDecl Program                                                   { $1:$2 }
+    | decl                                                                 { [$1] }
+    | decl component                                                       { $1:$2 }
 
-ExternDecl
+decl
     : int Ident '(' FuncParamDecls ')' ';'                                 { FuncDecl () $2 $4 }
     | int Ident '(' FuncParamDecls ')' BlockStmt                           { FuncDefn () $2 $4 $6 }
 
@@ -113,21 +113,21 @@ FuncCallArgs
 
 Expr
     : Ident '(' FuncCallArgs ')' %prec FUNC_CALL                           { FuncCall () $1 $3 }
-    | '-' Expr %prec UNARY_MINUS                                           { UnaryOp () OpAddCompl $2 }
-    | '!' Expr                                                             { UnaryOp () OpLogCompl $2 }
-    | '~' Expr                                                             { UnaryOp () OpBitCompl $2 }
+    | '+' Expr %prec UNARY_PLUS                                            { UnaryOp () OpPlus $2 }
+    | '-' Expr %prec UNARY_MINUS                                           { UnaryOp () OpMin $2 }
+    | '!' Expr                                                             { UnaryOp () OpNeg $2 }
     | Expr '+' Expr                                                        { BinaryOp () OpAdd $1 $3 }
     | Expr '-' Expr                                                        { BinaryOp () OpSub $1 $3 }
     | Expr '*' Expr                                                        { BinaryOp () OpMul $1 $3 }
     | Expr '/' Expr                                                        { BinaryOp () OpDiv $1 $3 }
-    | Expr "<=" Expr                                                       { BinaryOp () OpLTE $1 $3 }
-    | Expr "<" Expr                                                        { BinaryOp () OpLT $1 $3 }
-    | Expr ">=" Expr                                                       { BinaryOp () OpGTE $1 $3 }
-    | Expr ">" Expr                                                        { BinaryOp () OpGT $1 $3 }
-    | Expr "==" Expr                                                       { BinaryOp () OpEQ $1 $3 }
-    | Expr "!=" Expr                                                       { BinaryOp () OpNEQ $1 $3 }
-    | Expr "&&" Expr                                                       { BinaryOp () OpLogAnd $1 $3 }
-    | Expr "||" Expr                                                       { BinaryOp () OpLogOr $1 $3 }
+    | Expr "<" Expr                                                        { BinaryOp () OpLt $1 $3 }
+    | Expr ">" Expr                                                        { BinaryOp () OpGt $1 $3 }
+    | Expr "<=" Expr                                                       { BinaryOp () OpLte $1 $3 }
+    | Expr ">=" Expr                                                       { BinaryOp () OpGte $1 $3 }
+    | Expr "==" Expr                                                       { BinaryOp () OpEq $1 $3 }
+    | Expr "!=" Expr                                                       { BinaryOp () OpNeq $1 $3 }
+    | Expr "&&" Expr                                                       { BinaryOp () OpAnd $1 $3 }
+    | Expr "||" Expr                                                       { BinaryOp () OpOr $1 $3 }
     | '(' Expr ')'                                                         { $2 }
     | Ident '=' Expr                                                       { Assign () $1 $3 }
     | Ident                                                                { Ref () $1 }
@@ -159,6 +159,6 @@ parseError :: ([Token], [String]) -> P a
 parseError (toks, _) = P $ \_ l ->
   Left ("Parse error on line " ++ show l ++ " near " ++ show toks)
 
-parse :: String -> Either String [ExternDecl Parsed]
-parse s = runP (parseProgram (tokenize s)) "rosa" 1
+componentP :: [Token] -> P (Component Parsed)
+componentP = component
 }

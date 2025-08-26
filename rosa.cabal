@@ -17,10 +17,11 @@ common warnings
 
 library
     import:             warnings
-    exposed-modules:    Language.Rosa.Frontend.AST
-                        Language.Rosa.Frontend.Lexer
-                        Language.Rosa.Frontend.Parser
-    -- other-modules:
+    exposed-modules:    Language.Rosa.Syntax.AST
+    other-modules:      Language.Rosa.Syntax.Operators
+                        Language.Rosa.Syntax.Stages
+                        Language.Rosa.Parser.Lexer
+                        Language.Rosa.Parser.Parser
     -- other-extensions:
     build-depends:      array >=0.5 && <0.6,
                         base >=4.9 && <5,
