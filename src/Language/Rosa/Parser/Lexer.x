@@ -1,88 +1,66 @@
 {
-module Language.Rosa.Parser.Lexer (
-  Token(..),
-  tokenize
-) where
+module Language.Rosa.Parser.Lexer where
 
-import Data.Word
+import qualified Data.ByteString.Lazy.Char8 as BL
+
+import Language.Rosa.Ast
+import Language.Rosa.Parser.Token
 }
 
-%wrapper "basic"
-
-$digit = [0-9]
-$alpha = [a-zA-Z]
-$eol   = [\n]
+%wrapper "posn-bytestring"
 
 tokens :-
-  $eol                            ;
-  $white+                         ;
-  \(                              { \_ -> TokLPar }
-  \)                              { \_ -> TokRPar }
-  \{                              { \_ -> TokLBra }
-  \}                              { \_ -> TokRBra }
-  \;                              { \_ -> TokSemi }
-  \!                              { \_ -> TokNeg }
-  \*                              { \_ -> TokMul }
-  \/                              { \_ -> TokDiv }
-  \+                              { \_ -> TokPlus }
-  \-                              { \_ -> TokMinus }
-  "<="                            { \_ -> TokLte }
-  "<"                             { \_ -> TokLt }
-  ">="                            { \_ -> TokGte }
-  ">"                             { \_ -> TokGt }
-  "=="                            { \_ -> TokEq }
-  "!="                            { \_ -> TokNeq }
-  "&&"                            { \_ -> TokAnd }
-  "||"                            { \_ -> TokOr }
-  \=                              { \_ -> TokAssign }
-  "if"                            { \_ -> TokIf }
-  "else"                          { \_ -> TokElse }
-  "for"                           { \_ -> TokFor }
-  "while"                         { \_ -> TokWhile }
-  "do"                            { \_ -> TokDo }
-  "break"                         { \_ -> TokBreak }
-  "continue"                      { \_ -> TokContinue }
-  "return"                        { \_ -> TokRet }
-  "int"                           { \_ -> TokInt }
-  $digit+                         { \s -> TokLit (read s) }
-  [$alpha \_] [$alpha $digit \_]* { \s -> TokIdent s }
-  \,                              { \_ -> TokComma }
+  $white+                             ;
+
+  -- comments
+  "(*" ([^\*]|\*[^\/]|\*\n|\n)* "*)"  ;
+  "--" [^\n]*                         ;
+
+  -- symbols
+  ";"                                 { tok Semicolon }
+
+  -- operators
+  "="                                 { tok $ Op Assign }
+
+  -- keywords
+  "let"                               { tok KeywordLet }
+
+  -- literals
+  "true"                              { tok $ LiteralBool True }
+  "false"                             { tok $ LiteralBool False }
+
+  -- identifiers
+  [a-z][a-z0-9\-]*                    { tokString KebabIdentifier }
 
 {
-data Token
-  = TokLPar
-  | TokRPar
-  | TokLBra
-  | TokRBra
-  | TokSemi
-  | TokNeg
-  | TokMul
-  | TokDiv
-  | TokPlus
-  | TokMinus
-  | TokLte
-  | TokLt
-  | TokGte
-  | TokGt
-  | TokEq
-  | TokNeq
-  | TokAnd
-  | TokOr
-  | TokAssign
-  | TokIf
-  | TokElse
-  | TokFor
-  | TokWhile
-  | TokDo
-  | TokBreak
-  | TokContinue
-  | TokRet
-  | TokInt
-  | TokLit Word64
-  | TokIdent String
-  | TokComma
-  deriving (Eq, Show)
+tok :: TokenClass -> AlexPosn -> BL.ByteString -> Token
+tok tokClass p s = (tokClass, posnToSpan p s)
 
-tokenize :: String -> [Token]
-tokenize = alexScanTokens
+tokString :: (BL.ByteString -> TokenClass) -> AlexPosn -> BL.ByteString -> Token
+tokString f p s = (f s, posnToSpan p s)
+
+posnToSpan :: AlexPosn -> BL.ByteString -> Span
+posnToSpan p@(AlexPn _ sl sc) s = Span sl sc el ec
+  where
+    (el, ec) = posnOffset p s
+
+posnOffset :: AlexPosn -> BL.ByteString -> (Int, Int)
+posnOffset (AlexPn _ line col) s = (line + numNewlines, newCol)
+  where
+    numNewlines = length (BL.elemIndices '\n' s)
+    newCol = case BL.elemIndices '\n' s of
+      [] -> col + fromIntegral (BL.length s)
+      indices -> fromIntegral (BL.length s) - fromIntegral (last indices)
+
+tokenize :: BL.ByteString -> [Token]
+tokenize s = go (alexStartPos, '\n', s, 0)
+  where
+    go inp@(pos, _, s', _) =
+      case alexScan inp 0 of
+        AlexEOF -> []
+        AlexError ((AlexPn _ line column), _, _, _) ->
+          error $ "lexical error at line " ++ show line ++ ", column " ++ show column
+        AlexSkip inp' _ -> go inp'
+        AlexToken inp' len act ->
+          act pos (BL.take (fromIntegral len) s') : go inp'
 }
