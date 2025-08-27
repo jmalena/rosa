@@ -26,17 +26,22 @@ import Language.Rosa.Parser.Token
 
   -- literals
   bool       {(LiteralBool _, _)}
+  int        {(LiteralInt _, _)}
 
   -- identifier
-  identifier {(KebabIdentifier _, _)}
+  identifier {(IdentifierKebabCase _, _)}
 %%
 
-Statement :: {ValueLiteral}
-  : bool { BoolLiteral (extractBool (tokType $1)) }
+Statement :: { Expr }
+  : Expr { $1 }                
+
+Expr :: { Expr }
+  : bool { TermBool (tokSpan $1) (extractBool $ tokType $1) }
+  | int  { TermInt (tokSpan $1) (extractInt $ tokType $1) }
 
 {
 -- TODO: rewrite the ParserError prettyPrint          
 parseError :: ([Token], [String]) -> Parser a
 parseError (a, b) = ParserFail $ ParseError ("Unexpected end of input") Nothing
-parseError (tok:_, _) = ParserFail $ ParseError ("Unexpected " ++ (show $ tokType tok)) (Just $ tokPos tok)
+parseError (tok:_, _) = ParserFail $ ParseError ("Unexpected " ++ (show $ tokType tok)) (Just $ tokSpan tok)
 }

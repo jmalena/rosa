@@ -1,6 +1,9 @@
 module Language.Rosa.Ast.Expr where
 
-import Language.Rosa.Ast.Value
+import Data.Word
+
+import Language.Rosa.Ast.Span
 
 data Expr
-  = Literal ValueLiteral
+  = TermBool Span Bool
+  | TermInt Span Word64

@@ -17,14 +17,13 @@ common warnings
 
 library
     import:             warnings
-    exposed-modules:    Language.Rosa.Parser
+    exposed-modules:    Language.Rosa.Ast
+                        Language.Rosa.Parser
     other-modules:      Language.Rosa.Ast.Definitions.VarDefinition
                         Language.Rosa.Ast.Definitions
                         Language.Rosa.Ast.Expr
                         Language.Rosa.Ast.Operator
                         Language.Rosa.Ast.Span
-                        Language.Rosa.Ast.Value
-                        Language.Rosa.Ast
                         Language.Rosa.Error
                         Language.Rosa.Parser.Lexer
                         Language.Rosa.Parser.Monad
@@ -55,13 +54,11 @@ executable rosa
 test-suite rosa-test
     import:             warnings
     default-language:   Haskell2010
-    other-modules:      Language.Rosa.ParserTest
+    other-modules:      Language.Rosa.Parser.LexerSpec
     -- other-extensions:
     type:               exitcode-stdio-1.0
     hs-source-dirs:     test
-    main-is:            Driver.hs
+    main-is:            Spec.hs
     build-depends:      base >=4.9 && <5,
-                        tasty >=1.5 && <1.6,
-                        tasty-hunit >=0.10 && <0.11,
+                        hspec >=2.11 && <2.12,
                         rosa
-    build-tool-depends: tasty-discover:tasty-discover >=5.1 && <5.2

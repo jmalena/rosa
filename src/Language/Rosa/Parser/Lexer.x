@@ -2,6 +2,7 @@
 module Language.Rosa.Parser.Lexer where
 
 import qualified Data.ByteString.Lazy.Char8 as BL
+import           Data.Maybe
 
 import Language.Rosa.Ast
 import Language.Rosa.Parser.Token
@@ -29,15 +30,35 @@ tokens :-
   "true"                              { tok $ LiteralBool True }
   "false"                             { tok $ LiteralBool False }
 
+  "0b" [01]+                          { tokF (LiteralInt . parseBase 2 . BL.drop 2) }
+  "0o" [0-7]+                         { tokF (LiteralInt . parseBase 8 . BL.drop 2) }
+       [0-9]+                         { tokF (LiteralInt . parseBase 10) }
+  "0x" [0-9a-f]+                      { tokF (LiteralInt . parseBase 16 . BL.drop 2) }
+
   -- identifiers
-  [a-z][a-z0-9\-]*                    { tokString KebabIdentifier }
+  [a-z][0-9a-z\-]*                    { tokF IdentifierKebabCase }
 
 {
-tok :: TokenClass -> AlexPosn -> BL.ByteString -> Token
-tok tokClass p s = (tokClass, posnToSpan p s)
+parseBase :: Num a => Int -> BL.ByteString -> a
+parseBase base bs = go bs
+  where
+    go s =
+        if BL.null digits then 0 else fromInteger (toNum digits)
+      where
+        (digits, _) = BL.span validDigit s
+    validDigit c = digitValue c < base
+    digitValue c
+        | c >= '0' && c <= '9' = fromEnum c - fromEnum '0'
+        | c >= 'a' && c <= 'z' = 10 + (fromEnum c - fromEnum 'a')
+        | c >= 'A' && c <= 'Z' = 10 + (fromEnum c - fromEnum 'A')
+        | otherwise            = base -- invalid marker
+    toNum = BL.foldl' (\acc c -> acc * fromIntegral base + fromIntegral (digitValue c)) 0
 
-tokString :: (BL.ByteString -> TokenClass) -> AlexPosn -> BL.ByteString -> Token
-tokString f p s = (f s, posnToSpan p s)
+tok :: TokenClass -> AlexPosn -> BL.ByteString -> Token
+tok t p s = (t, posnToSpan p s)
+
+tokF :: (BL.ByteString -> TokenClass) -> AlexPosn -> BL.ByteString -> Token
+tokF f p s = (f s, posnToSpan p s)
 
 posnToSpan :: AlexPosn -> BL.ByteString -> Span
 posnToSpan p@(AlexPn _ sl sc) s = Span sl sc el ec

@@ -13,8 +13,8 @@ import Language.Rosa.Parser.Monad
 import Language.Rosa.Parser.Parser
 import Language.Rosa.Parser.Token
 
-parseString :: BL.ByteString -> Parser ValueLiteral
+parseString :: BL.ByteString -> Parser Expr
 parseString = moduleP . tokenize
 
-parseFile :: FilePath -> IO (Parser ValueLiteral)
+parseFile :: FilePath -> IO (Parser Expr)
 parseFile path = parseString <$> BL.readFile path
