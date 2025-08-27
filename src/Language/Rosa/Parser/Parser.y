@@ -21,7 +21,7 @@ import Language.Rosa.Parser.Token
   -- operators
   '='        {(Op Assign, _)}
 
-  -- keywords 
+  -- keywords
   "let"      {(KeywordLet, _)}
 
   -- literals
@@ -33,14 +33,14 @@ import Language.Rosa.Parser.Token
 %%
 
 Statement :: { Expr }
-  : Expr { $1 }                
+  : Literal { Literal $1 }
 
-Expr :: { Expr }
-  : bool { TermBool (tokSpan $1) (extractBool $ tokType $1) }
-  | int  { TermInt (tokSpan $1) (extractInt $ tokType $1) }
+Literal :: { ValueLiteral }
+  : bool { ValueBool (tokSpan $1) (extractBool $ tokType $1) }
+  | int  { ValueInt (tokSpan $1) (extractInt $ tokType $1) }
 
 {
--- TODO: rewrite the ParserError prettyPrint          
+-- TODO: rewrite the ParserError prettyPrint
 parseError :: ([Token], [String]) -> Parser a
 parseError (a, b) = ParserFail $ ParseError ("Unexpected end of input") Nothing
 parseError (tok:_, _) = ParserFail $ ParseError ("Unexpected " ++ (show $ tokType tok)) (Just $ tokSpan tok)

@@ -24,6 +24,7 @@ library
                         Language.Rosa.Ast.Expr
                         Language.Rosa.Ast.Operator
                         Language.Rosa.Ast.Span
+                        Language.Rosa.Ast.Value
                         Language.Rosa.Error
                         Language.Rosa.Parser.Lexer
                         Language.Rosa.Parser.Monad
