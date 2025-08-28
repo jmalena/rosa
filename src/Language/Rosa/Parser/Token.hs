@@ -5,7 +5,7 @@ import           Data.Word
 
 import Language.Rosa.Ast
 
-type Token = (Tok, Span)
+type Token = (Span, Tok)
 
 data Tok
   = TokSymbol BL.ByteString

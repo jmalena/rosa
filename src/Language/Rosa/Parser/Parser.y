@@ -22,34 +22,34 @@ import Language.Rosa.SourceFile
 
 %token
   -- symbols
-  '.'        { (TokSymbol ".", _) }
+  '.'        { (_, TokSymbol ".") }
 
   -- keywords
-  import     { (TokKeyword "import", _) }
+  import     { (_, TokKeyword "import") }
 
   -- literals
-  bool       { (TokBool _, _) }
-  int        { (TokInt _, _) }
+  bool       { (_, TokBool _) }
+  int        { (_, TokInt _) }
 
   -- identifier
-  identifier { (TokIdent _, _) }
+  identifier { (_, TokIdent _) }
 %%
 
 Statement :: { Statement }
   : import ModulePath
-    { Import (snd $1 <+> snd $2) (fst $2) }
-          
-ModulePath :: { (BL.ByteString, Span) }
+    { Import (fst $1 <+> fst $2) (snd $2) }
+
+ModulePath :: { (Span, BL.ByteString) }
   : identifier
-    { (extractIdent (fst $1), snd $1) }
+    { (fst $1, extractIdent (snd $1)) }
   | ModulePath '.' identifier
-    { (fst $1 <> "." <> extractIdent (fst $3), snd $1 <+> snd $3) }
-          
+    { (fst $1 <+> fst $3, snd $1 <> "." <> extractIdent (snd $3)) }
+
 Literal :: { ValueLiteral }
   : bool
-    { ValueBool (snd $1) (extractBool $ fst $1) }
+    { ValueBool (fst $1) (extractBool $ snd $1) }
   | int
-    { ValueInt (snd $1) (extractInt $ fst $1) }               
+    { ValueInt (fst $1) (extractInt $ snd $1) }
 
 {
 parseError :: [Token] -> Parser a

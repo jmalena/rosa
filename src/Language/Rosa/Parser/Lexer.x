@@ -50,10 +50,10 @@ tokens :-
 --------------------------------------------------------------------------------
 
 token :: Tok -> AlexPosn -> BL.ByteString -> Token
-token t p s = (t, posnToSpan p s)
+token t p s = (posnToSpan p s, t)
 
 string :: (BL.ByteString -> Tok) -> AlexPosn -> BL.ByteString -> Token
-string f p s = (f s, posnToSpan p s)
+string f p s = (posnToSpan p s, f s)
 
 --------------------------------------------------------------------------------
 -- Helpers
