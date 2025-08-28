@@ -18,38 +18,32 @@ import Language.Rosa.SourceFile
 
 %tokentype { Token }
 %monad { Parser }
-%errorhandlertype explist
 %error { parseError }
 
 %token
   -- symbols
-  ';'        {(Semicolon, _)}
-  '.'        {(Dot, _)}
-
-  -- operators
-  '='        {(Op Assign, _)}
+  '.'        { (TokSymbol ".", _) }
 
   -- keywords
-  import     {(KeywordImport, _)}
-  let        {(KeywordLet, _)}
+  import     { (TokKeyword "import", _) }
 
   -- literals
-  bool       {(LiteralBool _, _)}
-  int        {(LiteralInt _, _)}
+  bool       { (TokBool _, _) }
+  int        { (TokInt _, _) }
 
   -- identifier
-  identifier {(IdentifierKebabCase _, _)}
+  identifier { (TokIdent _, _) }
 %%
 
 Statement :: { Statement }
-  : import ModulePath ';'
-    { Import (snd $1 <+> snd $3) (fst $2) }
+  : import ModulePath
+    { Import (snd $1 <+> snd $2) (fst $2) }
           
 ModulePath :: { (BL.ByteString, Span) }
   : identifier
-    { (extractKebabCase (fst $1), snd $1) }
+    { (extractIdent (fst $1), snd $1) }
   | ModulePath '.' identifier
-    { (fst $1 <> "." <> extractKebabCase (fst $3), snd $1 <+> snd $3) }
+    { (fst $1 <> "." <> extractIdent (fst $3), snd $1 <+> snd $3) }
           
 Literal :: { ValueLiteral }
   : bool
@@ -58,11 +52,11 @@ Literal :: { ValueLiteral }
     { ValueInt (snd $1) (extractInt $ fst $1) }               
 
 {
-parseError :: ([Token], [String]) -> Parser a
-parseError ([], _) =
+parseError :: [Token] -> Parser a
+parseError [] =
   throwRosaError UnexpectedEndOfInput
-parseError (tok:_, _) =
-  throwRosaError $ UnexpectedToken (snd tok) (fst tok)
+parseError (tok:_) =
+  throwRosaError $ UnexpectedToken tok
 
 parseSourceFile :: SourceFile -> Parser Statement
 parseSourceFile src = scanTokens src >>= parseTokens

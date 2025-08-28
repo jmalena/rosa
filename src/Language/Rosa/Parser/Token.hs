@@ -5,24 +5,16 @@ import           Data.Word
 
 import Language.Rosa.Ast
 
-type Token = (TokenClass, Span)
+type Token = (Tok, Span)
 
-data TokenClass
-  -- symbols
-  = Semicolon
-  | Dot
-  
-  -- operators
-  | Op Operator
-
-  -- keywords
-  | KeywordImport
-  | KeywordLet
+data Tok
+  = TokSymbol BL.ByteString
+  | TokKeyword BL.ByteString
   
   -- literals
-  | LiteralBool { extractBool :: Bool }
-  | LiteralInt  { extractInt :: Word64 }
+  | TokBool { extractBool :: Bool }
+  | TokInt  { extractInt :: Word64 }
 
   -- identifiers
-  | IdentifierKebabCase { extractKebabCase :: BL.ByteString }
+  | TokIdent { extractIdent :: BL.ByteString }
  deriving (Eq, Show)

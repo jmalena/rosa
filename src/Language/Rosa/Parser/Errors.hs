@@ -1,6 +1,5 @@
 module Language.Rosa.Parser.Errors where
 
-import Language.Rosa.Ast (Span)
 import Language.Rosa.Error
 import Language.Rosa.Parser.Token
 
@@ -10,7 +9,7 @@ data LexerError
 
 data ParseError
   = UnexpectedEndOfInput
-  | UnexpectedToken Span TokenClass
+  | UnexpectedToken Token
   deriving (Eq, Show)
 
 instance CompilerError LexerError where

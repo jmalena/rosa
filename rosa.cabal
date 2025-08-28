@@ -25,7 +25,6 @@ library
     other-modules:      Language.Rosa.Ast.Definitions.VarDefinition
                         Language.Rosa.Ast.Definitions
                         Language.Rosa.Ast.Expr
-                        Language.Rosa.Ast.Operator
                         Language.Rosa.Ast.Span
                         Language.Rosa.Ast.Statement
                         Language.Rosa.Ast.Value
@@ -33,7 +32,6 @@ library
                         Language.Rosa.Parser.Errors
                         Language.Rosa.Parser.Lexer
                         Language.Rosa.Parser.Monad
-                        Language.Rosa.Parser.NumericParser
                         Language.Rosa.Parser.Parser
                         Language.Rosa.Parser.Token
 
