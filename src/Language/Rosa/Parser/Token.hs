@@ -5,22 +5,18 @@ import           Data.Word
 
 import Language.Rosa.Ast
 
-tokType :: Token -> TokenClass
-tokType (t, _) = t
-
-tokSpan :: Token -> Span
-tokSpan (_, p) = p
-
 type Token = (TokenClass, Span)
 
 data TokenClass
   -- symbols
   = Semicolon
+  | Dot
   
   -- operators
   | Op Operator
 
   -- keywords
+  | KeywordImport
   | KeywordLet
   
   -- literals

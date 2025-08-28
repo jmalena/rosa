@@ -1,7 +1,17 @@
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts #-}
+
 module Language.Rosa.Error where
 
-import Language.Rosa.Ast
+import Control.Monad.Except
 
-data RosaError
-  = ParseError String (Maybe Span)
-  deriving (Eq, Show)
+class (Eq a, Show a) => CompilerError a where
+  compilerError :: a -> IO ()
+
+data RosaError = forall a. (Eq a, Show a, CompilerError a) => RosaError a
+
+instance Show RosaError where
+  show (RosaError e) = show e
+
+throwRosaError :: (CompilerError a, MonadError RosaError m) => a -> m b
+throwRosaError e = throwError (RosaError e)

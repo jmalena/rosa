@@ -1,13 +1,20 @@
 {
+{-# LANGUAGE OverloadedStrings #-}
+
 module Language.Rosa.Parser.Parser where
+
+import qualified Data.ByteString.Lazy.Char8 as BL
 
 import Language.Rosa.Ast
 import Language.Rosa.Error
+import Language.Rosa.Parser.Errors
+import Language.Rosa.Parser.Lexer
 import Language.Rosa.Parser.Monad
 import Language.Rosa.Parser.Token
+import Language.Rosa.SourceFile
 }
 
-%name moduleP Statement
+%name parseTokens Statement
 
 %tokentype { Token }
 %monad { Parser }
@@ -17,12 +24,14 @@ import Language.Rosa.Parser.Token
 %token
   -- symbols
   ';'        {(Semicolon, _)}
+  '.'        {(Dot, _)}
 
   -- operators
   '='        {(Op Assign, _)}
 
   -- keywords
-  "let"      {(KeywordLet, _)}
+  import     {(KeywordImport, _)}
+  let        {(KeywordLet, _)}
 
   -- literals
   bool       {(LiteralBool _, _)}
@@ -32,16 +41,29 @@ import Language.Rosa.Parser.Token
   identifier {(IdentifierKebabCase _, _)}
 %%
 
-Statement :: { Expr }
-  : Literal { Literal $1 }
-
+Statement :: { Statement }
+  : import ModulePath ';'
+    { Import (snd $1 <+> snd $3) (fst $2) }
+          
+ModulePath :: { (BL.ByteString, Span) }
+  : identifier
+    { (extractKebabCase (fst $1), snd $1) }
+  | ModulePath '.' identifier
+    { (fst $1 <> "." <> extractKebabCase (fst $3), snd $1 <+> snd $3) }
+          
 Literal :: { ValueLiteral }
-  : bool { ValueBool (tokSpan $1) (extractBool $ tokType $1) }
-  | int  { ValueInt (tokSpan $1) (extractInt $ tokType $1) }
+  : bool
+    { ValueBool (snd $1) (extractBool $ fst $1) }
+  | int
+    { ValueInt (snd $1) (extractInt $ fst $1) }               
 
 {
--- TODO: rewrite the ParserError prettyPrint
 parseError :: ([Token], [String]) -> Parser a
-parseError (a, b) = ParserFail $ ParseError ("Unexpected end of input") Nothing
-parseError (tok:_, _) = ParserFail $ ParseError ("Unexpected " ++ (show $ tokType tok)) (Just $ tokSpan tok)
+parseError ([], _) =
+  throwRosaError UnexpectedEndOfInput
+parseError (tok:_, _) =
+  throwRosaError $ UnexpectedToken (snd tok) (fst tok)
+
+parseSourceFile :: SourceFile -> Parser Statement
+parseSourceFile src = scanTokens src >>= parseTokens
 }

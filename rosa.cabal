@@ -18,23 +18,31 @@ common warnings
 library
     import:             warnings
     exposed-modules:    Language.Rosa.Ast
+                        -- Language.Rosa.Compiler
+                        Language.Rosa.Error
                         Language.Rosa.Parser
+                        Language.Rosa.SourceFile
     other-modules:      Language.Rosa.Ast.Definitions.VarDefinition
                         Language.Rosa.Ast.Definitions
                         Language.Rosa.Ast.Expr
                         Language.Rosa.Ast.Operator
                         Language.Rosa.Ast.Span
+                        Language.Rosa.Ast.Statement
                         Language.Rosa.Ast.Value
-                        Language.Rosa.Error
+                        -- Language.Rosa.Compiler.Monad
+                        Language.Rosa.Parser.Errors
                         Language.Rosa.Parser.Lexer
                         Language.Rosa.Parser.Monad
+                        Language.Rosa.Parser.NumericParser
                         Language.Rosa.Parser.Parser
                         Language.Rosa.Parser.Token
+
     -- other-extensions:
     build-depends:      array >=0.5 && <0.6,
                         base >=4.9 && <5,
                         bytestring >=0.12 && <0.13,
-                        filepath >=1.5 && <1.6
+                        filepath >=1.5 && <1.6,
+                        mtl >=2.3 && <2.4
     build-tool-depends: alex:alex >=3.5 && <3.6,
                         happy:happy >=2.0 && <2.1
     hs-source-dirs:     src
@@ -61,5 +69,6 @@ test-suite rosa-test
     hs-source-dirs:     test
     main-is:            Spec.hs
     build-depends:      base >=4.9 && <5,
+                        bytestring >=0.12 && <0.13,
                         hspec >=2.11 && <2.12,
                         rosa
