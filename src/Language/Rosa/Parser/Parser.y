@@ -22,28 +22,26 @@ import Language.Rosa.SourceFile
 
 %token
   -- symbols
-  '.'        { (_, TokSymbol ".") }
+  '('          { (_, TokSymbol "(") }
+  ')'          { (_, TokSymbol ")") }
 
   -- keywords
-  import     { (_, TokKeyword "import") }
+  import       { (_, TokKeyword "import") }
 
   -- literals
-  bool       { (_, TokBool _) }
-  int        { (_, TokInt _) }
+  bool         { (_, TokBool _) }
+  int          { (_, TokInt _) }
 
   -- identifier
-  identifier { (_, TokIdent _) }
+  ident        { (_, TokIdent _) }
+
+  -- module path
+  modulepath { (_, TokModulePath _) }
 %%
 
 Statement :: { Statement }
-  : import ModulePath
-    { Import (fst $1 <+> fst $2) (snd $2) }
-
-ModulePath :: { (Span, BL.ByteString) }
-  : identifier
-    { (fst $1, extractIdent (snd $1)) }
-  | ModulePath '.' identifier
-    { (fst $1 <+> fst $3, snd $1 <> "." <> extractIdent (snd $3)) }
+  : import modulepath
+    { Import (fst $1 <+> fst $2) (extractModulePath $ snd $2) }
 
 Literal :: { ValueLiteral }
   : bool

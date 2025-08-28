@@ -30,8 +30,9 @@ tasty_lexer = testGroup "Lexer"
         @?= []
 
   , testCase "tokenize symbols" $
-      tokens "."
-        @?= [ (Span 1 1 1 2, TokSymbol ".")
+      tokens "( )"
+        @?= [ (Span 1 1 1 2, TokSymbol "(")
+            , (Span 1 3 1 4, TokSymbol ")")
             ]
 
   , testCase "tokenize keywords" $

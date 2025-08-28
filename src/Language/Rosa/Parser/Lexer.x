@@ -19,10 +19,13 @@ import Language.Rosa.SourceFile
 --------------------------------------------------------------------------------
 -- Character sets
 --------------------------------------------------------------------------------
-$symbol = [ \. ]
+$symbol     = [ \( \) ]
 
-@keyword = import
-@identifier = [a-z][a-z0-9\-]*
+@keyword    = import
+
+@ident      = [a-z][a-z0-9\-]*
+
+@modulepath = @ident (\.@ident)*
 
 tokens :-
   $white+                             ;
@@ -42,8 +45,10 @@ tokens :-
   "0x" [0-9a-f]+                      { string (TokInt . parseBase 16 . BL.drop 2) }
 
   -- identifiers
-  @identifier                         { string TokIdent }
+  @ident                              { string TokIdent }
 
+  -- module path
+  @modulepath                         { string TokModulePath }
 {
 --------------------------------------------------------------------------------
 -- Action helpers

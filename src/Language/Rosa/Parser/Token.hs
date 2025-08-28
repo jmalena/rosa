@@ -17,4 +17,5 @@ data Tok
 
   -- identifiers
   | TokIdent { extractIdent :: BL.ByteString }
+  | TokModulePath { extractModulePath :: BL.ByteString }
  deriving (Eq, Show)
