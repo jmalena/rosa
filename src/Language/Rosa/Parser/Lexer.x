@@ -95,7 +95,7 @@ posnOffset (AlexPn _ line col) s = (line + numNewlines, newCol)
       indices -> fromIntegral (BL.length s) - fromIntegral (last indices)
 
 scanTokens :: SourceFile -> Parser [Token]
-scanTokens source = go (alexStartPos, '\n', srcFileContent source, 0)
+scanTokens srcFile = go (alexStartPos, '\n', srcFileContent srcFile, 0)
   where
     go inp@(pos, _, s, _) =
       case alexScan inp 0 of

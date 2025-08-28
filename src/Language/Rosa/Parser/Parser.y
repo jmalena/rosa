@@ -59,5 +59,5 @@ parseError (tok:_) =
   throwRosaError $ UnexpectedToken tok
 
 parseSourceFile :: SourceFile -> Parser Statement
-parseSourceFile src = scanTokens src >>= parseTokens
+parseSourceFile srcFile = scanTokens srcFile >>= parseTokens
 }

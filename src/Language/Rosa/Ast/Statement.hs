@@ -6,3 +6,4 @@ import Language.Rosa.Ast.Span
 
 data Statement
   = Import Span BL.ByteString
+  deriving (Eq, Show)
