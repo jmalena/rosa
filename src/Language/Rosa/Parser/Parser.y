@@ -8,16 +8,17 @@ import qualified Data.ByteString.Lazy.Char8 as BL
 import Language.Rosa.Ast
 import Language.Rosa.Error
 import Language.Rosa.Parser.Errors
-import Language.Rosa.Parser.Lexer
 import Language.Rosa.Parser.Monad
+import Language.Rosa.Parser.Lexer
 import Language.Rosa.Parser.Token
 import Language.Rosa.SourceFile
 }
 
-%name parseTokens Statement
+%name parseModule Statement
 
 %tokentype { Token }
 %monad { Parser }
+%lexer { lexer } { (_, TokEOF) }
 %error { parseError }
 
 %token
@@ -36,12 +37,12 @@ import Language.Rosa.SourceFile
   ident        { (_, TokIdent _) }
 
   -- module path
-  modulepath { (_, TokModulePath _) }
+  modulepath   { (_, TokModulePath _) }
 %%
 
 Statement :: { Statement }
   : import modulepath
-    { Import (fst $1 <+> fst $2) (extractModulePath $ snd $2) }
+    { Import (fst $1 <> fst $2) (extractModulePath $ snd $2) }
 
 Literal :: { ValueLiteral }
   : bool
@@ -50,12 +51,20 @@ Literal :: { ValueLiteral }
     { ValueInt (fst $1) (extractInt $ snd $1) }
 
 {
-parseError :: [Token] -> Parser a
-parseError [] =
-  throwRosaError UnexpectedEndOfInput
-parseError (tok:_) =
-  throwRosaError $ UnexpectedToken tok
+lexer :: (Token -> Parser a) -> Parser a
+lexer = (nextToken >>=)
 
-parseSourceFile :: SourceFile -> Parser Statement
-parseSourceFile srcFile = scanTokens srcFile >>= parseTokens
+parseError :: Token -> Parser a
+parseError _ = undefined
+  --((AlexPn _ line column), _, _, _) <- alexGetInput
+  --alexError ("TODO: parse error " ++ (show line) ++ ", column " ++ (show column))
+
+--parseError :: [Token] -> Parser a
+--parseError [] =
+--  throwRosaError UnexpectedEndOfInput
+--parseError (tok:_) =
+--   throwRosaError $ UnexpectedToken tok
+
+--parseSourceFile :: SourceFile -> Parser Statement
+--parseSourceFile srcFile = scanSourceFile srcFile >>= parseModule
 }

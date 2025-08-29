@@ -19,7 +19,9 @@ library
     import:             warnings
     exposed-modules:    Language.Rosa.Ast
                         -- Language.Rosa.Compiler
+                        Language.Rosa.Data.Position
                         Language.Rosa.Error
+                        Language.Rosa.Monad
                         Language.Rosa.Parser
                         Language.Rosa.SourceFile
     other-modules:      Language.Rosa.Ast.Definitions.VarDefinition
@@ -29,7 +31,7 @@ library
                         Language.Rosa.Ast.Statement
                         Language.Rosa.Ast.Value
                         -- Language.Rosa.Compiler.Monad
-                        Language.Rosa.Parser.Errors
+                        -- Language.Rosa.Parser.Errors
                         Language.Rosa.Parser.Lexer
                         Language.Rosa.Parser.Monad
                         Language.Rosa.Parser.Parser

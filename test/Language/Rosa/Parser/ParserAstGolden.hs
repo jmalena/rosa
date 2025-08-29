@@ -4,6 +4,7 @@ module Language.Rosa.Parser.ParserAstGolden where
 
 import qualified Data.ByteString.Lazy.Char8 as BL
 
+import Language.Rosa.Monad
 import Language.Rosa.Parser
 import Language.Rosa.SourceFile
 
@@ -31,7 +32,7 @@ goldenAstTest srcPath = goldenVsString srcFileName goldenPath runner
     goldenPath = testDir </> addExtension srcFileName astExt
     runner = do
       srcFile <- FileSource srcPath <$> BL.readFile srcPath
-      case runParser (parseSourceFile srcFile) of
+      case runRosa (runParser parseModule srcFile) of
         Left err -> error (show err)
         Right ast -> pure $ BL.pack (show ast)
 

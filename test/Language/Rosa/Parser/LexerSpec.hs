@@ -5,6 +5,7 @@ module Language.Rosa.Parser.LexerSpec where
 import qualified Data.ByteString.Lazy.Char8 as BL
 
 import Language.Rosa.Ast
+import Language.Rosa.Monad
 import Language.Rosa.Parser
 import Language.Rosa.SourceFile
 
@@ -13,7 +14,7 @@ import Test.Tasty.HUnit
 
 tokens :: BL.ByteString -> [Token]
 tokens input =
-  case runParser (scanTokens (StdinSource input)) of
+  case runRosa (runParser tokenize (StdinSource input)) of
     Left err -> error (show err)
     Right toks -> toks
 
