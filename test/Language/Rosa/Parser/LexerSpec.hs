@@ -27,7 +27,7 @@ tasty_lexer = testGroup "Lexer"
   , testCase "ignore comments" $ do
       tokens "-- single line comment"
         @?= []
-      tokens "|-\nblockl\ncomment\n-|"
+      tokens "|-\nblock\ncomment\n-|"
         @?= []
 
   , testCase "tokenize symbols" $

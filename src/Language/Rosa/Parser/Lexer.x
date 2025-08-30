@@ -20,7 +20,10 @@ import Language.Rosa.SourceFile
 -- Character sets
 ------------------------------------------------------------
 
-$symbol     = [ \( \) ]
+$return     = [\r]
+$linefeed   = [\n]
+
+$symbol     = [\(\)]
 
 $digit      = [0-9]
 $bindig     = [0-1]
@@ -30,6 +33,8 @@ $hexdig     = [0-9a-f]
 ------------------------------------------------------------
 -- Regular expressions
 ------------------------------------------------------------
+
+@newline    = $return?$linefeed
 
 @keyword    = import
 
@@ -45,6 +50,7 @@ tokens :-
   <0> $white+                             ;
 
   -- states
+  <0> "--"                                { begin linecom }
   <0> "|-"                                { begin blockcom }
 
   -- symbols
@@ -67,8 +73,13 @@ tokens :-
   -- module paths
   <0> @modulepath                         { tokenF TokModulePath }
 
+  -- line comments
+  <linecom> @newline                      { begin 0 }
+  <linecom> .			          ;
+
   -- block comments
   <blockcom> "-|"                         { begin 0 }
+  <blockcom> @newline                     ;
   <blockcom> .			          ;
 
 {
