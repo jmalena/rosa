@@ -145,7 +145,7 @@ movePos (Pos o r c) _    = Pos (succ o) r        (succ c)
 
 nextToken :: Parser Token
 nextToken = do
-  inp@(_, _, _, n) <- getInput
+  inp@(_, _, s, n) <- getInput
   sc <- getStartCode
   case alexScan inp sc of
     AlexEOF ->
@@ -158,9 +158,9 @@ nextToken = do
       setInput inp'
       nextToken
 
-    AlexToken inp'@(_, _, s, n') _ act -> do
+    AlexToken inp'@(_, _, _, n') _ act -> do
       let len = n'-n
-      let match = BL.take len s
+      let match = (BL.take len s)
       setInput inp'
       act match
 
