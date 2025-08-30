@@ -3,9 +3,9 @@ module Language.Rosa.Parser.Token where
 import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.Word
 
-import Language.Rosa.Ast
+import Language.Rosa.Data.SourceSpan
 
-type Token = (Span, Tok)
+type Token = (SrcSpan, Tok)
 
 data Tok
   = TokSymbol BL.ByteString

@@ -8,7 +8,7 @@ import           Data.Maybe
 import           Data.Word
 
 import Language.Rosa.Ast
-import Language.Rosa.Data.Position
+import Language.Rosa.Data.SourceSpan
 import Language.Rosa.Error
 import Language.Rosa.Parser.Errors
 import Language.Rosa.Parser.Monad
@@ -76,24 +76,24 @@ tokens :-
 -- Actions
 --------------------------------------------------------------------------------
 
-type Action a = BL.ByteString -> Parser a
+type Action a = SrcSpan -> BL.ByteString -> Parser a
 
 begin :: Int -> Action Token
-begin sc _ = do
+begin sc _ _ = do
   setStartCode sc
   nextToken
 
 token :: Tok -> Action Token
-token t _ = pure (Span 0 0 0 0, t)
+token t sp _ = pure (sp, t)
 
 tokenF :: (BL.ByteString -> Tok) -> Action Token
-tokenF f s = pure (Span 0 0 0 0, f s)
+tokenF f sp s = pure (sp, f s)
 
 tokenInt :: (BL.ByteString -> Maybe Word64) -> Action Token
-tokenInt f s =
+tokenInt f sp s =
   case f s of
     Nothing -> throwRosaError (IntParserInternalError s)
-    Just num -> pure $ (Span 0 0 0 0, TokInt num)
+    Just num -> pure $ (sp, TokInt num)
 
 parseBase :: (Num a, Integral a) => Int -> BL.ByteString -> Maybe a
 parseBase base s
@@ -121,9 +121,6 @@ parseBase base s
 
 type AlexInput = ParserInput
 
-tokenEOF :: Token
-tokenEOF = (Span 0 0 0 0, TokEOF)
-
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (_, c, _, _) = c
 
@@ -133,26 +130,20 @@ alexGetByte (p, _, cs, n) =
     Nothing -> Nothing
     Just (c, cs') ->
       let b = BL.c2w c
-          p' = movePos p c
+          p' = advancePos p (BL.singleton c)
           n' = succ n
       in p' `seq` cs' `seq` n' `seq` Just (b, (p', c, cs', n'))
 
-movePos :: Position -> Char -> Position
-movePos NoPos       _    = NoPos
-movePos (Pos o r _) '\n' = Pos (succ o) (succ r) 1
-movePos (Pos o r c) '\r' = Pos (succ o) r        c
-movePos (Pos o r c) _    = Pos (succ o) r        (succ c)
-
 nextToken :: Parser Token
 nextToken = do
-  inp@(_, _, s, n) <- getInput
+  inp@(p, _, s, n) <- getInput
   sc <- getStartCode
   case alexScan inp sc of
     AlexEOF ->
-      pure tokenEOF
+      pure (mkSpan p p, TokEOF)
 
-    AlexError _ ->
-      undefined -- TODO: add error
+    AlexError (p', _, _, _) ->
+      throwRosaError $ UnexpectedCharacter p'
 
     AlexSkip inp' _ -> do
       setInput inp'
@@ -160,14 +151,15 @@ nextToken = do
 
     AlexToken inp'@(_, _, _, n') _ act -> do
       let len = n'-n
-      let match = (BL.take len s)
+      let match = BL.take len s
+      let sp = mkSpanFromText p match
       setInput inp'
-      act match
+      act sp match
 
 tokenize :: Parser [Token]
 tokenize = do
   tok <- nextToken
-  if tok == tokenEOF
+  if snd tok == TokEOF
     then pure []
     else (tok :) <$> tokenize
 }

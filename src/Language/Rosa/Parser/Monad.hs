@@ -10,12 +10,12 @@ import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.Int
 
 import Language.Rosa.Error
-import Language.Rosa.Data.Position
+import Language.Rosa.Data.SourceSpan
 import Language.Rosa.Monad
 import Language.Rosa.SourceFile
 
 type ParserInput = 
-  ( Position      -- ^ current position,
+  ( SrcPos        -- ^ current position,
   , Char          -- ^ previous char
   , BL.ByteString -- ^ current input string
   , Int64         -- ^ bytes consumed so far
@@ -46,4 +46,4 @@ runParser :: Parser a -> SourceFile -> Rosa a
 runParser (Parser m) srcFile = evalStateT m st
   where
     s = srcFileContent srcFile
-    st = ParserState (NoPos, '\n', s, 0) 0
+    st = ParserState (mkPos 1 1, '\n', s, 0) 0

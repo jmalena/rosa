@@ -2,8 +2,8 @@ module Language.Rosa.Ast.Statement where
 
 import qualified Data.ByteString.Lazy.Char8 as BL
 
-import Language.Rosa.Ast.Span
+import Language.Rosa.Data.SourceSpan
 
 data Statement
-  = Import Span BL.ByteString
+  = Import SrcSpan BL.ByteString
   deriving (Eq, Show)

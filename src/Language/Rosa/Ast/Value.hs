@@ -2,9 +2,9 @@ module Language.Rosa.Ast.Value where
 
 import Data.Word
 
-import Language.Rosa.Ast.Span
+import Language.Rosa.Data.SourceSpan
 
 data ValueLiteral
-  = ValueBool Span Bool
-  | ValueInt Span Word64
+  = ValueBool SrcSpan Bool
+  | ValueInt SrcSpan Word64
   deriving (Eq, Show)
