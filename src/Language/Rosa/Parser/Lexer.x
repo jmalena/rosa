@@ -9,6 +9,7 @@ import           Data.Word
 
 import Language.Rosa.Ast
 import Language.Rosa.Data.Position
+import Language.Rosa.Error
 import Language.Rosa.Parser.Errors
 import Language.Rosa.Parser.Monad
 import Language.Rosa.Parser.Token
@@ -47,10 +48,10 @@ tokens :-
   <0> "|-"                                { begin blockcom }
 
   -- symbols
-  <0> $symbol			          { string TokSymbol }
+  <0> $symbol			          { tokenF TokSymbol }
 
   -- keywords
-  <0> @keyword			          { string TokKeyword }
+  <0> @keyword			          { tokenF TokKeyword }
 
   -- block comment
   <0> "|-" ([^\*]|\*[^\/]|\*\n|\n)* "-|"  { skip }
@@ -59,16 +60,16 @@ tokens :-
   -- literals
   <0> "true"                              { token $ TokBool True }
   <0> "false"                             { token $ TokBool False }
-  <0> "0b" $bindig+                       { string (TokInt . parseBase 2 . BL.drop 2) }
-  <0> "0o" $octdig+                       { string (TokInt . parseBase 8 . BL.drop 2) }
-  <0>      $digit+                        { string (TokInt . parseBase 10) }
-  <0> "0x" $hexdig+                       { string (TokInt . parseBase 16 . BL.drop 2) }
+  <0> "0b" $bindig+                       { tokenInt (parseBase 2 . BL.drop 2) }
+  <0> "0o" $octdig+                       { tokenInt (parseBase 8 . BL.drop 2) }
+  <0>      $digit+                        { tokenInt (parseBase 10) }
+  <0> "0x" $hexdig+                       { tokenInt (parseBase 16 . BL.drop 2) }
 
   -- identifiers
-  <0> @ident                              { string TokIdent }
+  <0> @ident                              { tokenF TokIdent }
 
   -- module paths
-  <0> @modulepath                         { string TokModulePath }
+  <0> @modulepath                         { tokenF TokModulePath }
 
   -- block comments
   <blockcom> "-|"                         { begin 0 }
@@ -81,37 +82,45 @@ tokens :-
 
 type Action a = BL.ByteString -> Parser a
 
+begin :: Int -> Action Token
+begin sc _ = do
+  setStartCode sc
+  nextToken
+
 skip :: Action Token
 skip _ = nextToken
 
 token :: Tok -> Action Token
 token t _ = pure (Span 0 0 0 0, t)
 
-string :: (BL.ByteString -> Tok) -> Action Token
-string f s = pure (Span 0 0 0 0, f s)
+tokenF :: (BL.ByteString -> Tok) -> Action Token
+tokenF f s = pure (Span 0 0 0 0, f s)
 
-begin :: Int -> Action Token
-begin sc _ = do
-  setStartCode sc
-  nextToken
+tokenInt :: (BL.ByteString -> Maybe Word64) -> Action Token
+tokenInt f s =
+  case f s of
+    Nothing -> throwRosaError (IntParserInternalError s)
+    Just num -> pure $ (Span 0 0 0 0, TokInt num)
 
-{-
-alexEOF :: Alex Token
-alexEOF = return (NoSpan, TokEOF)
-
-posnToSpan :: AlexPosn -> BL.ByteString -> Span
-posnToSpan p@(AlexPn _ sl sc) s = Span sl sc el ec
+parseBase :: (Num a, Integral a) => Int -> BL.ByteString -> Maybe a
+parseBase base s
+  | base < 2  = Nothing
+  | otherwise =
+      if BL.null digits
+        then Nothing
+        else Just (toNum digits)
   where
-    (el, ec) = posnOffset p s
+    (digits, rest) = BL.span validDigit s
 
-posnOffset :: AlexPosn -> BL.ByteString -> (Int, Int)
-posnOffset (AlexPn _ line col) s = (line + numNewlines, newCol)
-  where
-    numNewlines = length (BL.elemIndices '\n' s)
-    newCol = case BL.elemIndices '\n' s of
-      [] -> col + fromIntegral (BL.length s)
-      indices -> fromIntegral (BL.length s) - fromIntegral (last indices)
--}
+    validDigit c = digitValue c < base
+
+    digitValue c
+      | c >= '0' && c <= '9' = fromEnum c - fromEnum '0'
+      | c >= 'a' && c <= 'z' = 10 + (fromEnum c - fromEnum 'a')
+      | c >= 'A' && c <= 'Z' = 10 + (fromEnum c - fromEnum 'A')
+      | otherwise            = base  -- mark invalid
+
+    toNum = BL.foldl' (\acc c -> acc * fromIntegral base + fromIntegral (digitValue c)) 0
 
 --------------------------------------------------------------------------------
 -- Lexer
@@ -158,8 +167,9 @@ nextToken = do
 
     AlexToken inp'@(_, _, s, n') _ act -> do
       let len = n'-n
+      let match = BL.take len s
       setInput inp'
-      act s
+      act match
 
 tokenize :: Parser [Token]
 tokenize = do
@@ -167,26 +177,4 @@ tokenize = do
   if tok == tokenEOF
     then pure []
     else (tok :) <$> tokenize
-
---------------------------------------------------------------------------------
--- Literals
---------------------------------------------------------------------------------
-
-parseBase :: Num a => Int -> BL.ByteString -> a
-parseBase base bs = go bs
-  where
-    go s =
-      if BL.null digits then 0 else fromInteger (toNum digits)
-      where
-        (digits, _) = BL.span validDigit s
-
-    validDigit c = digitValue c < base
-
-    digitValue c
-      | c >= '0' && c <= '9' = fromEnum c - fromEnum '0'
-      | c >= 'a' && c <= 'z' = 10 + (fromEnum c - fromEnum 'a')
-      | c >= 'A' && c <= 'Z' = 10 + (fromEnum c - fromEnum 'A')
-      | otherwise            = base  -- invalid marker
-
-    toNum = BL.foldl' (\acc c -> acc * fromIntegral base + fromIntegral (digitValue c)) 0
 }
