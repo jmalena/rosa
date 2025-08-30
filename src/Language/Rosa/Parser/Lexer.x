@@ -42,7 +42,7 @@ $hexdig     = [0-9a-f]
 ------------------------------------------------------------
 tokens :-
   -- white spaces
-  <0> $white+                             { skip }
+  <0> $white+                             ;
 
   -- states
   <0> "|-"                                { begin blockcom }
@@ -52,10 +52,6 @@ tokens :-
 
   -- keywords
   <0> @keyword			          { tokenF TokKeyword }
-
-  -- block comment
-  <0> "|-" ([^\*]|\*[^\/]|\*\n|\n)* "-|"  { skip }
-  <0> "--" [^\n]*                         { skip }
 
   -- literals
   <0> "true"                              { token $ TokBool True }
@@ -73,7 +69,7 @@ tokens :-
 
   -- block comments
   <blockcom> "-|"                         { begin 0 }
-  <blockcom> .			          { skip }
+  <blockcom> .			          ;
 
 {
 --------------------------------------------------------------------------------
@@ -86,9 +82,6 @@ begin :: Int -> Action Token
 begin sc _ = do
   setStartCode sc
   nextToken
-
-skip :: Action Token
-skip _ = nextToken
 
 token :: Tok -> Action Token
 token t _ = pure (Span 0 0 0 0, t)

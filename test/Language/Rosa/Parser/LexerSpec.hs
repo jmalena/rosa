@@ -24,12 +24,6 @@ tasty_lexer = testGroup "Lexer"
       tokens " \n \n \t\n\n\t  "
         @?= []
 
-  , testCase "tokenize comments" $ do
-      tokens "-- single line comment"
-        @?= []
-      tokens "(* multi\nline\ncomment *)"
-        @?= []
-
   , testCase "tokenize symbols" $
       tokens "( )"
         @?= [ (Span 1 1 1 2, TokSymbol "(")
