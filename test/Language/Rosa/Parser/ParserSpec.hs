@@ -1,6 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-
-module Language.Rosa.Parser.ParserAstGolden where
+module Language.Rosa.Parser.ParserSpec where
 
 import qualified Data.ByteString.Lazy.Char8 as BL
 
@@ -16,29 +14,27 @@ import Test.Tasty.Golden
 rosaExt :: FilePath
 rosaExt = ".rosa"
 
-astExt :: FilePath
-astExt = ".ast"
-
-goldenDir :: FilePath
-goldenDir = "test" </> "golden"
+outExt :: FilePath
+outExt = ".out"
 
 testDir :: FilePath
-testDir = goldenDir </> "parser"
+testDir = "test" </> "golden" </> "parser"
 
 goldenAstTest :: FilePath -> TestTree
 goldenAstTest srcPath = goldenVsString srcFileName goldenPath runner
   where
     srcFileName = takeFileName srcPath
-    goldenPath = testDir </> addExtension srcFileName astExt
+    goldenPath = testDir </> addExtension srcFileName outExt
     runner = do
       srcFile <- FileSource srcPath <$> BL.readFile srcPath
-      case runRosa (runParser parseModule srcFile) of
-        Left err -> error (show err)
-        Right ast -> pure $ BL.pack (show ast)
+      pure $
+        case runRosa (runParser parseModule srcFile) of
+          Left err -> BL.pack $ show err
+          Right _ -> BL.empty
 
-tasty_parserAst :: IO TestTree
-tasty_parserAst = do
+tasty_parser :: IO TestTree
+tasty_parser = do
   srcPaths <- findByExtension [rosaExt] testDir
   return $
-    testGroup "Parser AST" $
+    testGroup "Parser" $
       [ goldenAstTest srcPath | srcPath <- srcPaths ]

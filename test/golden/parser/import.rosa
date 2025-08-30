@@ -1,1 +1,3 @@
-import my-package.my-module
+import my-package.my-module1
+import my-package.my-module2
+import my-package.my-module3

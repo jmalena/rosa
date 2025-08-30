@@ -142,8 +142,8 @@ nextToken = do
     AlexEOF ->
       pure (mkSpan p p, TokEOF)
 
-    AlexError (p', _, _, _) ->
-      throwRosaError $ UnexpectedCharacter p'
+    AlexError _ ->
+      throwRosaError $ UnexpectedCharacter p
 
     AlexSkip inp' _ -> do
       setInput inp'
