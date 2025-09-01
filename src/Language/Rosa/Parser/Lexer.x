@@ -154,7 +154,7 @@ nextToken = do
       pure (mkSpan p p, TokEOF)
 
     AlexError _ ->
-      throwRosaError $ UnexpectedCharacter p
+      throwRosaError $ UnexpectedChar p (BL.head s)
 
     AlexSkip inp' _ -> do
       setInput inp'

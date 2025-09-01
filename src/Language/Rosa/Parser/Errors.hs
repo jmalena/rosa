@@ -7,9 +7,8 @@ import Language.Rosa.Error
 import Language.Rosa.Parser.Token
 
 data ParseError
-  = UnexpectedCharacter SrcPos
+  = UnexpectedChar SrcPos Char
   | UnexpectedToken Token
-  | UnexpectedEndOfInput
   | IntParserInternalError BL.ByteString
   deriving (Eq, Show)
 

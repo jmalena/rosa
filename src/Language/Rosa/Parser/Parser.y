@@ -55,16 +55,5 @@ lexer :: (Token -> Parser a) -> Parser a
 lexer = (nextToken >>=)
 
 parseError :: Token -> Parser a
-parseError _ = undefined
-  --((AlexPn _ line column), _, _, _) <- alexGetInput
-  --alexError ("TODO: parse error " ++ (show line) ++ ", column " ++ (show column))
-
---parseError :: [Token] -> Parser a
---parseError [] =
---  throwRosaError UnexpectedEndOfInput
---parseError (tok:_) =
---   throwRosaError $ UnexpectedToken tok
-
---parseSourceFile :: SourceFile -> Parser Statement
---parseSourceFile srcFile = scanSourceFile srcFile >>= parseModule
+parseError tok = throwRosaError $ UnexpectedToken tok
 }
