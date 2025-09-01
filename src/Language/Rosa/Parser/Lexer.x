@@ -5,6 +5,7 @@ import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.ByteString.Internal   as BL (c2w)
 import           Data.Int
 import           Data.Maybe
+import           Data.List
 import           Data.Word
 
 import Language.Rosa.Ast
@@ -71,7 +72,7 @@ tokens :-
   <0> @ident                              { tokenF TokIdent }
 
   -- module paths
-  <0> @modulepath                         { tokenF TokModulePath }
+  <0> @modulepath                         { tokenF (TokModulePath . map BL.unpack . BL.split '.') }
 
   -- line comments
   <linecom> @newline                      { begin 0 }

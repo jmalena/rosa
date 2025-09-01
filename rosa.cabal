@@ -20,14 +20,17 @@ library
     exposed-modules:    Language.Rosa.Ast
                         -- Language.Rosa.Compiler
                         Language.Rosa.Data.SourceSpan
+                        Language.Rosa.Data.ModulePath
                         Language.Rosa.Error
                         Language.Rosa.Monad
                         Language.Rosa.Parser
                         Language.Rosa.SourceFile
     other-modules:      Language.Rosa.Ast.Definitions.VarDefinition
                         Language.Rosa.Ast.Definitions
+                        Language.Rosa.Ast.Decl
                         Language.Rosa.Ast.Expr
-                        Language.Rosa.Ast.Statement
+                        Language.Rosa.Ast.ImportDecl
+                        Language.Rosa.Ast.Module
                         Language.Rosa.Ast.Value
                         -- Language.Rosa.Compiler.Monad
                         Language.Rosa.Parser.Errors

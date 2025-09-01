@@ -3,6 +3,7 @@ module Language.Rosa.Parser.Token where
 import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.Word
 
+import Language.Rosa.Data.ModulePath
 import Language.Rosa.Data.SourceSpan
 
 type Token = (SrcSpan, Tok)
@@ -17,7 +18,7 @@ data Tok
 
   -- identifiers
   | TokIdent { extractIdent :: BL.ByteString }
-  | TokModulePath { extractModulePath :: BL.ByteString }
+  | TokModulePath { extractModulePath :: ModulePath }
 
   -- EOF
   | TokEOF
