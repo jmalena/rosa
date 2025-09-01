@@ -87,4 +87,9 @@ tasty_lexer = testGroup "Lexer"
         @?= [ (mkSpan (mkPos 1 1) (mkPos 1 6), TokIdent "lorem")
             , (mkSpan (mkPos 1 7) (mkPos 1 18), TokIdent "ipsum-dolor")
             ]
+
+  , testCase "tokenize module paths" $
+      tokens "rosa.base"
+        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 10), TokModulePath ["rosa", "base"])
+            ]
   ]
