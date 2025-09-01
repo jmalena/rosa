@@ -42,10 +42,6 @@ import Language.Rosa.SourceFile
 %%
 
 ------------------------------------------------------------
--- Token Projections
-------------------------------------------------------------
-
-------------------------------------------------------------
 -- Utils
 ------------------------------------------------------------
 
@@ -74,18 +70,23 @@ module :: { Module }
 
 import_decl :: { ImportDecl }
   : import modulepath
-    { ImportDecl
-      { importDeclMeta = fst $1 <> fst $2
-      , importDeclPath = extractModulePath $ snd $2
-      }
+    { let TokModulePath mp = snd $2
+        in ImportDecl
+          { importDeclMeta = fst $1 <> fst $2
+          , importDeclPath = mp
+          }
     }
 
 {-
 Literal :: { ValueLiteral }
   : bool
-    { ValueBool (fst $1) (extractBool $ snd $1) }
+    { let TokBool val = snd $2 in
+        ValueBool (fst $1) val
+    }
   | int
-    { ValueInt (fst $1) (extractInt $ snd $1) }
+    { let TokInt val = snd $2 in
+        ValueInt (fst $1) val
+    }
 -}
 
 {

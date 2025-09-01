@@ -13,12 +13,12 @@ data Tok
   | TokKeyword BL.ByteString
   
   -- literals
-  | TokBool { extractBool :: Bool }
-  | TokInt  { extractInt :: Word64 }
+  | TokBool Bool
+  | TokInt  Word64
 
   -- identifiers
-  | TokIdent { extractIdent :: BL.ByteString }
-  | TokModulePath { extractModulePath :: ModulePath }
+  | TokIdent BL.ByteString
+  | TokModulePath ModulePath
 
   -- EOF
   | TokEOF
