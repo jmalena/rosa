@@ -18,13 +18,11 @@ common warnings
 library
     import:             warnings
     exposed-modules:    Language.Rosa.Ast
+                        Language.Rosa.Core
                         -- Language.Rosa.Compiler
-                        Language.Rosa.Data.SourceSpan
-                        Language.Rosa.Data.ModulePath
                         Language.Rosa.Error
                         Language.Rosa.Monad
                         Language.Rosa.Parser
-                        Language.Rosa.SourceFile
     other-modules:      Language.Rosa.Ast.Definitions.VarDefinition
                         Language.Rosa.Ast.Definitions
                         Language.Rosa.Ast.Decl
@@ -32,6 +30,9 @@ library
                         Language.Rosa.Ast.ImportDecl
                         Language.Rosa.Ast.Module
                         Language.Rosa.Ast.Value
+                        Language.Rosa.Core.ModulePath
+                        Language.Rosa.Core.SourceFile
+                        Language.Rosa.Core.SourceSpan
                         -- Language.Rosa.Compiler.Monad
                         Language.Rosa.Parser.Errors
                         Language.Rosa.Parser.Lexer

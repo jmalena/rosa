@@ -1,4 +1,4 @@
-module Language.Rosa.Data.ModulePath where
+module Language.Rosa.Core.ModulePath where
 
 import System.FilePath
 

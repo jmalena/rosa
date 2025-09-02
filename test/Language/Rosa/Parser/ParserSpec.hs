@@ -2,9 +2,9 @@ module Language.Rosa.Parser.ParserSpec where
 
 import qualified Data.ByteString.Lazy.Char8 as BL
 
+import Language.Rosa.Core
 import Language.Rosa.Monad
 import Language.Rosa.Parser
-import Language.Rosa.SourceFile
 
 import System.FilePath
 

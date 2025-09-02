@@ -5,12 +5,12 @@ import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.List.NonEmpty         as NE
 
 import Language.Rosa.Ast
+import Language.Rosa.Core
 import Language.Rosa.Error
 import Language.Rosa.Parser.Errors
 import Language.Rosa.Parser.Monad
 import Language.Rosa.Parser.Lexer
 import Language.Rosa.Parser.Token
-import Language.Rosa.SourceFile
 }
 
 %name parseModule module

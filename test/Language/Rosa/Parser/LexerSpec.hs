@@ -4,10 +4,9 @@ module Language.Rosa.Parser.LexerSpec where
 
 import qualified Data.ByteString.Lazy.Char8 as BL
 
-import Language.Rosa.Data.SourceSpan
+import Language.Rosa.Core
 import Language.Rosa.Monad
 import Language.Rosa.Parser
-import Language.Rosa.SourceFile
 
 import Test.Tasty
 import Test.Tasty.HUnit

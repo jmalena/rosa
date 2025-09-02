@@ -9,10 +9,9 @@ import Control.Monad.Except
 import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.Int
 
+import Language.Rosa.Core
 import Language.Rosa.Error
-import Language.Rosa.Data.SourceSpan
 import Language.Rosa.Monad
-import Language.Rosa.SourceFile
 
 type ParserInput = 
   ( SrcPos        -- ^ current position,

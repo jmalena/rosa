@@ -9,14 +9,12 @@ import           Data.List
 import           Data.Word
 
 import Language.Rosa.Ast
-import Language.Rosa.Data.ModulePath
-import Language.Rosa.Data.SourceSpan
+import Language.Rosa.Core
 import Language.Rosa.Error
 import Language.Rosa.Parser.Errors
 import Language.Rosa.Parser.Literal
 import Language.Rosa.Parser.Monad
 import Language.Rosa.Parser.Token
-import Language.Rosa.SourceFile
 }
 
 ------------------------------------------------------------

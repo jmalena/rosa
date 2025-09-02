@@ -1,7 +1,6 @@
 module Language.Rosa.Ast.ImportDecl where
 
-import Language.Rosa.Data.ModulePath
-import Language.Rosa.Data.SourceSpan
+import Language.Rosa.Core
 
 data ImportDecl = ImportDecl
   { importDeclMeta :: SrcSpan

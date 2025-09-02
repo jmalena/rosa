@@ -1,6 +1,8 @@
-module Language.Rosa.Data.SourceSpan where
+module Language.Rosa.Core.SourceSpan where
 
 import qualified Data.ByteString.Lazy.Char8 as BL
+
+type Located a = (SrcSpan, a)
 
 -- | Represents a single position in a source file.
 --   Line and column numbers are 1-based.

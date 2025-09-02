@@ -1,4 +1,4 @@
-module Language.Rosa.SourceFile where
+module Language.Rosa.Core.SourceFile where
 
 import qualified Data.ByteString.Lazy.Char8 as BL
 

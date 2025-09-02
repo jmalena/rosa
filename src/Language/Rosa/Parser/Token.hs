@@ -1,9 +1,8 @@
 module Language.Rosa.Parser.Token where
 
-import           Data.Word
+import Data.Word
 
-import Language.Rosa.Data.ModulePath
-import Language.Rosa.Data.SourceSpan
+import Language.Rosa.Core
 
 type Token = (SrcSpan, TokenClass)
 
