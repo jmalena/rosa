@@ -35,6 +35,7 @@ library
                         -- Language.Rosa.Compiler.Monad
                         Language.Rosa.Parser.Errors
                         Language.Rosa.Parser.Lexer
+                        Language.Rosa.Parser.Literal
                         Language.Rosa.Parser.Monad
                         Language.Rosa.Parser.Parser
                         Language.Rosa.Parser.Token

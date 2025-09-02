@@ -12,6 +12,7 @@ import Language.Rosa.Ast
 import Language.Rosa.Data.SourceSpan
 import Language.Rosa.Error
 import Language.Rosa.Parser.Errors
+import Language.Rosa.Parser.Literal
 import Language.Rosa.Parser.Monad
 import Language.Rosa.Parser.Token
 import Language.Rosa.SourceFile
@@ -104,26 +105,6 @@ tokenInt f sp s =
   case f s of
     Nothing -> throwRosaError (IntParserInternalError s)
     Just num -> pure $ (sp, TInt num)
-
-parseBase :: (Num a, Integral a) => Int -> BL.ByteString -> Maybe a
-parseBase base s
-  | base < 2  = Nothing
-  | otherwise =
-      if BL.null digits
-        then Nothing
-        else Just (toNum digits)
-  where
-    (digits, rest) = BL.span validDigit s
-
-    validDigit c = digitValue c < base
-
-    digitValue c
-      | c >= '0' && c <= '9' = fromEnum c - fromEnum '0'
-      | c >= 'a' && c <= 'z' = 10 + (fromEnum c - fromEnum 'a')
-      | c >= 'A' && c <= 'Z' = 10 + (fromEnum c - fromEnum 'A')
-      | otherwise            = base  -- mark invalid
-
-    toNum = BL.foldl' (\acc c -> acc * fromIntegral base + fromIntegral (digitValue c)) 0
 
 --------------------------------------------------------------------------------
 -- Lexer
