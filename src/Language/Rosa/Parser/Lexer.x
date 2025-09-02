@@ -54,25 +54,23 @@ tokens :-
   <0> "--"                                { begin linecom }
   <0> "|-"                                { begin blockcom }
 
-  -- symbols
-  <0> $symbol			          { tokenF TokSymbol }
-
-  -- keywords
-  <0> @keyword			          { tokenF TokKeyword }
+  -- special
+  <0> @symbol			          { tokenF TSymbol }
+  <0> @keyword			          { tokenF TKeyword }
 
   -- literals
-  <0> "true"                              { token $ TokBool True }
-  <0> "false"                             { token $ TokBool False }
+  <0> "true"                              { token $ TBool True }
+  <0> "false"                             { token $ TBool False }
   <0> "0b" $bindig+                       { tokenInt (parseBase 2 . BL.drop 2) }
   <0> "0o" $octdig+                       { tokenInt (parseBase 8 . BL.drop 2) }
   <0>      $digit+                        { tokenInt (parseBase 10) }
   <0> "0x" $hexdig+                       { tokenInt (parseBase 16 . BL.drop 2) }
 
   -- identifiers
-  <0> @ident                              { tokenF TokIdent }
+  <0> @ident                              { tokenF TIdent }
 
   -- module paths
-  <0> @modulepath                         { tokenF (TokModulePath . map BL.unpack . BL.split '.') }
+  <0> @modulepath                         { tokenF (TModulePath . map BL.unpack . BL.split '.') }
 
   -- line comments
   <linecom> @newline                      { begin 0 }
@@ -95,17 +93,17 @@ begin sc _ _ = do
   setStartCode sc
   nextToken
 
-token :: Tok -> Action Token
+token :: TokenClass -> Action Token
 token t sp _ = pure (sp, t)
 
-tokenF :: (BL.ByteString -> Tok) -> Action Token
+tokenF :: (BL.ByteString -> TokenClass) -> Action Token
 tokenF f sp s = pure (sp, f s)
 
 tokenInt :: (BL.ByteString -> Maybe Word64) -> Action Token
 tokenInt f sp s =
   case f s of
     Nothing -> throwRosaError (IntParserInternalError s)
-    Just num -> pure $ (sp, TokInt num)
+    Just num -> pure $ (sp, TInt num)
 
 parseBase :: (Num a, Integral a) => Int -> BL.ByteString -> Maybe a
 parseBase base s
@@ -152,7 +150,7 @@ nextToken = do
   sc <- getStartCode
   case alexScan inp sc of
     AlexEOF ->
-      pure (mkSpan p p, TokEOF)
+      pure (mkSpan p p, TEof)
 
     AlexError _ ->
       throwRosaError $ UnexpectedChar p (BL.head s)
@@ -171,7 +169,7 @@ nextToken = do
 tokenize :: Parser [Token]
 tokenize = do
   tok <- nextToken
-  if snd tok == TokEOF
+  if snd tok == TEof
     then pure []
     else (tok :) <$> tokenize
 }

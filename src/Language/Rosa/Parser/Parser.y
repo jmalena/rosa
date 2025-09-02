@@ -19,26 +19,26 @@ import Language.Rosa.SourceFile
 
 %tokentype { Token }
 %monad { Parser }
-%lexer { lexer } { (_, TokEOF) }
+%lexer { lexer } { (_, TEof) }
 %error { parseError }
 
 %token
   -- symbols
-  '('          { (_, TokSymbol "(") }
-  ')'          { (_, TokSymbol ")") }
+  '('          { (_, TSymbol "(") }
+  ')'          { (_, TSymbol ")") }
 
   -- keywords
-  import       { (_, TokKeyword "import") }
+  import       { (_, TKeyword "import") }
 
   -- literals
-  bool         { (_, TokBool _) }
-  int          { (_, TokInt _) }
+  bool         { (_, TBool _) }
+  int          { (_, TInt _) }
 
   -- identifier
-  ident        { (_, TokIdent _) }
+  ident        { (_, TIdent _) }
 
   -- module path
-  modulepath   { (_, TokModulePath _) }
+  modulepath   { (_, TModulePath _) }
 %%
 
 ------------------------------------------------------------
@@ -70,7 +70,7 @@ module :: { Module }
 
 import_decl :: { ImportDecl }
   : import modulepath
-    { let TokModulePath mp = snd $2
+    { let TModulePath mp = snd $2
         in ImportDecl
           { importDeclMeta = fst $1 <> fst $2
           , importDeclPath = mp
@@ -80,11 +80,11 @@ import_decl :: { ImportDecl }
 {-
 Literal :: { ValueLiteral }
   : bool
-    { let TokBool val = snd $2 in
+    { let TBool val = snd $1 in
         ValueBool (fst $1) val
     }
   | int
-    { let TokInt val = snd $2 in
+    { let TInt val = snd $1 in
         ValueInt (fst $1) val
     }
 -}

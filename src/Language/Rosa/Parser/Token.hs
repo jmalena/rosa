@@ -6,20 +6,21 @@ import           Data.Word
 import Language.Rosa.Data.ModulePath
 import Language.Rosa.Data.SourceSpan
 
-type Token = (SrcSpan, Tok)
+type Token = (SrcSpan, TokenClass)
 
-data Tok
-  = TokSymbol BL.ByteString
-  | TokKeyword BL.ByteString
+data TokenClass
+  -- special
+  = TSymbol BL.ByteString
+  | TKeyword BL.ByteString
   
   -- literals
-  | TokBool Bool
-  | TokInt  Word64
+  | TBool Bool
+  | TInt  Word64
 
   -- identifiers
-  | TokIdent BL.ByteString
-  | TokModulePath ModulePath
+  | TIdent BL.ByteString
+  | TModulePath ModulePath
 
   -- EOF
-  | TokEOF
+  | TEof
  deriving (Eq, Show)
