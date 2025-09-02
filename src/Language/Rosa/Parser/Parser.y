@@ -1,6 +1,4 @@
 {
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Rosa.Parser.Parser where
 
 import qualified Data.ByteString.Lazy.Char8 as BL

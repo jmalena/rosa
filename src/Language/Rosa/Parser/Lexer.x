@@ -9,6 +9,7 @@ import           Data.List
 import           Data.Word
 
 import Language.Rosa.Ast
+import Language.Rosa.Data.ModulePath
 import Language.Rosa.Data.SourceSpan
 import Language.Rosa.Error
 import Language.Rosa.Parser.Errors
@@ -62,16 +63,16 @@ tokens :-
   -- literals
   <0> "true"                              { token $ TBool True }
   <0> "false"                             { token $ TBool False }
-  <0> "0b" $bindig+                       { tokenInt (parseBase 2 . BL.drop 2) }
-  <0> "0o" $octdig+                       { tokenInt (parseBase 8 . BL.drop 2) }
+  <0> "0b" $bindig+                       { tokenInt (parseBase 2 . drop 2) }
+  <0> "0o" $octdig+                       { tokenInt (parseBase 8 . drop 2) }
   <0>      $digit+                        { tokenInt (parseBase 10) }
-  <0> "0x" $hexdig+                       { tokenInt (parseBase 16 . BL.drop 2) }
+  <0> "0x" $hexdig+                       { tokenInt (parseBase 16 . drop 2) }
 
   -- identifiers
   <0> @ident                              { tokenF TIdent }
 
   -- module paths
-  <0> @modulepath                         { tokenF (TModulePath . map BL.unpack . BL.split '.') }
+  <0> @modulepath                         { tokenF (TModulePath . parseModulePath) }
 
   -- line comments
   <linecom> @newline                      { begin 0 }
@@ -87,7 +88,7 @@ tokens :-
 -- Actions
 --------------------------------------------------------------------------------
 
-type Action a = SrcSpan -> BL.ByteString -> Parser a
+type Action a = SrcSpan -> String -> Parser a
 
 begin :: Int -> Action Token
 begin sc _ _ = do
@@ -97,10 +98,10 @@ begin sc _ _ = do
 token :: TokenClass -> Action Token
 token t sp _ = pure (sp, t)
 
-tokenF :: (BL.ByteString -> TokenClass) -> Action Token
+tokenF :: (String -> TokenClass) -> Action Token
 tokenF f sp s = pure (sp, f s)
 
-tokenInt :: (BL.ByteString -> Maybe Word64) -> Action Token
+tokenInt :: (String -> Maybe Word64) -> Action Token
 tokenInt f sp s =
   case f s of
     Nothing -> throwRosaError (IntParserInternalError s)
@@ -127,14 +128,14 @@ alexGetByte (p, _, cs, n) =
 
 nextToken :: Parser Token
 nextToken = do
-  inp@(p, _, s, n) <- getInput
+  inp@(p, _, bs, n) <- getInput
   sc <- getStartCode
   case alexScan inp sc of
     AlexEOF ->
       pure (mkSpan p p, TEof)
 
     AlexError _ ->
-      throwRosaError $ UnexpectedChar p (BL.head s)
+      throwRosaError $ UnexpectedChar p (BL.head bs)
 
     AlexSkip inp' _ -> do
       setInput inp'
@@ -142,10 +143,10 @@ nextToken = do
 
     AlexToken inp'@(_, _, _, n') _ act -> do
       let len = n'-n
-      let match = BL.take len s
-      let sp = mkSpanFromText p match
+      let lexeme = BL.take len bs
+      let sp = lexemeSpan p lexeme
       setInput inp'
-      act sp match
+      act sp (BL.unpack lexeme)
 
 tokenize :: Parser [Token]
 tokenize = do

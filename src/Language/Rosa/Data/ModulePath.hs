@@ -4,17 +4,14 @@ import System.FilePath
 
 type ModulePath = [String]
 
-{-
-newtype ModulePath = ModulePath [String]
-  deriving (Eq)
-
-instance Show ModulePath where
-  show (ModulePath parts) = intercalate "." parts
--}
--- TODO: check if parts contains valid chars
-{-
-mkModulePath :: String -> Maybe ModulePath
--}
+parseModulePath :: String -> ModulePath
+parseModulePath s = splitDots s
+  where
+    splitDots "" = []
+    splitDots str =
+      case break (=='.') str of
+        (x, "")   -> [x]
+        (x, _:xs) -> x : splitDots xs
 
 -- TODO: moduleFilePath should return absolute paths
 {-

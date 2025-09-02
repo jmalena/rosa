@@ -39,7 +39,7 @@ mkSpan p1 p2
   | p1 <= p2  = SrcSpan p1 p2
   | otherwise = SrcSpan p2 p1
 
-mkSpanFromText :: SrcPos -> BL.ByteString -> SrcSpan
-mkSpanFromText startPos bs =
-  let endPos = advancePos startPos bs
+lexemeSpan :: SrcPos -> BL.ByteString -> SrcSpan
+lexemeSpan startPos lexeme =
+  let endPos = advancePos startPos lexeme
   in mkSpan startPos endPos

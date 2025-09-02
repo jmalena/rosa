@@ -1,6 +1,5 @@
 module Language.Rosa.Parser.Token where
 
-import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.Word
 
 import Language.Rosa.Data.ModulePath
@@ -10,15 +9,15 @@ type Token = (SrcSpan, TokenClass)
 
 data TokenClass
   -- special
-  = TSymbol BL.ByteString
-  | TKeyword BL.ByteString
+  = TSymbol String
+  | TKeyword String
   
   -- literals
   | TBool Bool
   | TInt  Word64
 
   -- identifiers
-  | TIdent BL.ByteString
+  | TIdent String
   | TModulePath ModulePath
 
   -- EOF
