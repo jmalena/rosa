@@ -15,3 +15,12 @@ instance Show RosaError where
 
 throwRosaError :: (CompilerError a, MonadError RosaError m) => a -> m b
 throwRosaError e = throwError (RosaError e)
+
+{-
+expectMaybe :: (CompilerError e, MonadError RosaError m) => e -> Maybe a -> m a
+expectMaybe err = maybe (throwRosaError err) pure
+-}
+
+-- TODO: use better name
+expectEither :: (CompilerError e, MonadError RosaError m) => Either e a -> m a
+expectEither = either throwRosaError pure

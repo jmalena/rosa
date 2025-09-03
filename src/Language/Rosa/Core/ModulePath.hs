@@ -4,8 +4,8 @@ import System.FilePath
 
 type ModulePath = [String]
 
-parseModulePath :: String -> ModulePath
-parseModulePath s = splitDots s
+readModulePath :: String -> ModulePath
+readModulePath s = splitDots s
   where
     splitDots "" = []
     splitDots str =

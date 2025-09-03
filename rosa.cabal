@@ -68,6 +68,7 @@ test-suite rosa-test
     import:             warnings
     default-language:   Haskell2010
     other-modules:      Language.Rosa.Parser.LexerSpec
+                        Language.Rosa.Parser.LiteralSpec
                         Language.Rosa.Parser.ParserSpec
     -- other-extensions:
     type:               exitcode-stdio-1.0

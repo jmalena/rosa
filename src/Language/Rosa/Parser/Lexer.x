@@ -61,16 +61,16 @@ tokens :-
   -- literals
   <0> "true"                              { token $ TBool True }
   <0> "false"                             { token $ TBool False }
-  <0> "0b" $bindig+                       { tokenInt (parseBase 2 . drop 2) }
-  <0> "0o" $octdig+                       { tokenInt (parseBase 8 . drop 2) }
-  <0>      $digit+                        { tokenInt (parseBase 10) }
-  <0> "0x" $hexdig+                       { tokenInt (parseBase 16 . drop 2) }
+  <0> "0b" $bindig+                       { tokenM (fmap TInt . expectEither . readBase 2 . drop 2) }
+  <0> "0o" $octdig+                       { tokenM (fmap TInt . expectEither . readBase 8 . drop 2) }
+  <0>      $digit+                        { tokenM (fmap TInt . expectEither . readBase 10) }
+  <0> "0x" $hexdig+                       { tokenM (fmap TInt . expectEither . readBase 16 . drop 2) }
 
   -- identifiers
   <0> @ident                              { tokenF TIdent }
 
   -- module paths
-  <0> @modulepath                         { tokenF (TModulePath . parseModulePath) }
+  <0> @modulepath                         { tokenF (TModulePath . readModulePath) }
 
   -- line comments
   <linecom> @newline                      { begin 0 }
@@ -94,16 +94,15 @@ begin sc _ _ = do
   nextToken
 
 token :: TokenClass -> Action Token
-token t sp _ = pure (sp, t)
+token = tokenM . const . pure
 
 tokenF :: (String -> TokenClass) -> Action Token
-tokenF f sp s = pure (sp, f s)
+tokenF f = tokenM (pure . f)
 
-tokenInt :: (String -> Maybe Word64) -> Action Token
-tokenInt f sp s =
-  case f s of
-    Nothing -> throwRosaError (IntParserInternalError s)
-    Just num -> pure $ (sp, TInt num)
+tokenM :: (String -> Parser TokenClass) -> Action Token
+tokenM f sp s = do
+  tc <- f s
+  pure (sp, tc)
 
 --------------------------------------------------------------------------------
 -- Lexer
