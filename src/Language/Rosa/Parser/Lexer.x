@@ -119,13 +119,13 @@ alexGetByte (p, _, cs, n) =
     Nothing -> Nothing
     Just (c, cs') ->
       let b = BL.c2w c
-          p' = advancePos p (BL.singleton c)
+          p' = advancePos p c
           n' = succ n
       in p' `seq` cs' `seq` n' `seq` Just (b, (p', c, cs', n'))
 
 nextToken :: Parser Token
 nextToken = do
-  inp@(p, _, bs, n) <- getInput
+  inp@(p, _, bs, _) <- getInput
   sc <- getStartCode
   case alexScan inp sc of
     AlexEOF ->
@@ -138,12 +138,12 @@ nextToken = do
       setInput inp'
       nextToken
 
-    AlexToken inp'@(_, _, _, n') _ act -> do
-      let len = n'-n
-      let lexeme = BL.take len bs
-      let sp = lexemeSpan p lexeme
-      setInput inp'
-      act sp (BL.unpack lexeme)
+    AlexToken inp' len act ->
+      let s = take len (BL.unpack bs)
+	  sp = p `spanOver` s
+      in do
+        setInput inp'
+	act sp s
 
 tokenize :: Parser [Token]
 tokenize = do
