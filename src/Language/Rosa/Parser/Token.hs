@@ -4,9 +4,7 @@ import Data.Word
 
 import Language.Rosa.Core
 
-type Token = (SrcSpan, TokenClass)
-
-data TokenClass
+data Token
   -- special
   = TSymbol String
   | TKeyword String

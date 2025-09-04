@@ -88,21 +88,22 @@ tokens :-
 
 type Action a = SrcSpan -> String -> Parser a
 
-begin :: Int -> Action Token
+begin :: Int -> Action (Located Token)
 begin sc _ _ = do
   setStartCode sc
   nextToken
 
-token :: TokenClass -> Action Token
+token :: Token -> Action (Located Token)
 token = tokenM . const . pure
 
-tokenF :: (String -> TokenClass) -> Action Token
+tokenF :: (String -> Token) -> Action (Located Token)
 tokenF f = tokenM (pure . f)
 
-tokenM :: (String -> Parser TokenClass) -> Action Token
+
+tokenM :: (String -> Parser Token) -> Action (Located Token)
 tokenM f sp s = do
   tc <- f s
-  pure (sp, tc)
+  pure $ mkAnn sp tc
 
 --------------------------------------------------------------------------------
 -- Lexer
@@ -123,13 +124,14 @@ alexGetByte (p, _, cs, n) =
           n' = succ n
       in p' `seq` cs' `seq` n' `seq` Just (b, (p', c, cs', n'))
 
-nextToken :: Parser Token
+nextToken :: Parser (Located Token)
 nextToken = do
   inp@(p, _, bs, _) <- getInput
   sc <- getStartCode
   case alexScan inp sc of
-    AlexEOF ->
-      pure (mkSpan p p, TEof)
+    AlexEOF -> do
+      let sp = mkSpan p p
+      pure $ mkAnn sp TEof
 
     AlexError _ ->
       throwRosaError $ UnexpectedChar p (BL.head bs)
@@ -145,10 +147,10 @@ nextToken = do
         setInput inp'
 	act sp s
 
-tokenize :: Parser [Token]
+tokenize :: Parser [Located Token]
 tokenize = do
   tok <- nextToken
-  if snd tok == TEof
+  if val tok == TEof
     then pure []
     else (tok :) <$> tokenize
 }

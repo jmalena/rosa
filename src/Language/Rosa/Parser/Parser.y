@@ -15,28 +15,27 @@ import Language.Rosa.Parser.Token
 
 %name parseModule module
 
-%tokentype { Token }
+%tokentype { Located Token }
 %monad { Parser }
-%lexer { lexer } { (_, TEof) }
+%lexer { lexer } { Ann (_, TEof) }
 %error { parseError }
 
 %token
   -- symbols
-  '('          { (_, TSymbol "(") }
-  ')'          { (_, TSymbol ")") }
+  ':='          { Ann (_, TSymbol ":=") }
 
   -- keywords
-  import       { (_, TKeyword "import") }
+  import       { Ann (_, TKeyword "import") }
 
   -- literals
-  bool         { (_, TBool _) }
-  int          { (_, TInt _) }
+  bool         { Ann (_, TBool _) }
+  int          { Ann (_, TInt _) }
 
   -- identifier
-  ident        { (_, TIdent _) }
+  ident        { Ann (_, TIdent _) }
 
   -- module path
-  modulepath   { (_, TModulePath _) }
+  modulepath   { Ann (_, TModulePath _) }
 %%
 
 ------------------------------------------------------------
@@ -68,29 +67,27 @@ module :: { Module }
 
 import_decl :: { ImportDecl }
   : import modulepath
-    { let TModulePath mp = snd $2
+    { let TModulePath mp = val $2
         in ImportDecl
-          { importDeclMeta = fst $1 <> fst $2
+          { importDeclMeta = ann $1 <+> ann $2
           , importDeclPath = mp
           }
     }
 
-{-
-Literal :: { ValueLiteral }
+expr :: { Expr }
   : bool
-    { let TBool val = snd $1 in
-        ValueBool (fst $1) val
+    { let TBool x = val $1
+        in ValueBool (ann $1) x
     }
   | int
-    { let TInt val = snd $1 in
-        ValueInt (fst $1) val
+    { let TInt x = val $1
+        in ValueInt (ann $1) x
     }
--}
 
 {
-lexer :: (Token -> Parser a) -> Parser a
+lexer :: (Located Token -> Parser a) -> Parser a
 lexer = (nextToken >>=)
 
-parseError :: Token -> Parser a
+parseError :: Located Token -> Parser a
 parseError tok = throwRosaError $ UnexpectedToken tok
 }

@@ -1,9 +1,5 @@
 module Language.Rosa.Core.SourceSpan where
 
-import qualified Data.ByteString.Lazy.Char8 as BL
-
-type Located a = (SrcSpan, a)
-
 -- | Represents a single position in a source file.
 --   Line and column numbers are 1-based.
 data SrcPos = SrcPos
@@ -17,6 +13,11 @@ data SrcSpan = SrcSpan
   { start :: !SrcPos
   , end   :: !SrcPos
   } deriving (Eq, Ord, Show)
+
+-- | Combine two spans into a span covering both.
+--   Uses the Semigroup instance.
+(<+>) :: SrcSpan -> SrcSpan -> SrcSpan
+(<+>) = (<>)
 
 instance Semigroup SrcSpan where
   (<>) (SrcSpan s1 e1) (SrcSpan s2 e2) =

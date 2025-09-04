@@ -29,7 +29,7 @@ library
                         Language.Rosa.Ast.Expr
                         Language.Rosa.Ast.ImportDecl
                         Language.Rosa.Ast.Module
-                        Language.Rosa.Ast.Value
+                        Language.Rosa.Core.Annotation
                         Language.Rosa.Core.ModulePath
                         Language.Rosa.Core.SourceFile
                         Language.Rosa.Core.SourceSpan

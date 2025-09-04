@@ -6,7 +6,7 @@ import Language.Rosa.Parser.Token
 
 data ParseError
   = UnexpectedChar SrcPos Char
-  | UnexpectedToken Token
+  | UnexpectedToken (Located Token)
   | ParserInternalError String
   deriving (Eq, Show)
 

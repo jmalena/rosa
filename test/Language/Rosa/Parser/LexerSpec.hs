@@ -8,11 +8,10 @@ import Language.Rosa.Core
 import Language.Rosa.Monad
 import Language.Rosa.Parser
 
-import Test.Tasty ( TestTree, testGroup )
 import Test.Tasty
 import Test.Tasty.HUnit
 
-runLex :: BL.ByteString -> [Token]
+runLex :: BL.ByteString -> [Located Token]
 runLex input =
   case runRosa (runParser tokenize (StdinSource input)) of
     Left err -> error (show err)
@@ -32,63 +31,63 @@ tasty_lexer = testGroup "Lexer"
 
   , testCase "tokenize symbols" $
       runLex ":="
-        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 3), TSymbol ":=")
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 3) @: TSymbol ":="
             ]
 
   , testCase "tokenize keywords" $
       runLex "import"
-        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 7), TKeyword "import")
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 7) @: TKeyword "import"
             ]
 
   , testCase "tokenize 'bool' literals" $
       runLex "false true"
-        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 6), TBool False)
-            , (mkSpan (mkPos 1 7) (mkPos 1 11), TBool True)
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 6) @: TBool False
+            , mkSpan (mkPos 1 7) (mkPos 1 11) @: TBool True
             ]
 
   , testCase "tokenize 'int' literals (base 2)" $
       runLex "0b0 0b101 0b001100 0b000000"
-        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 4), TInt 0)
-            , (mkSpan (mkPos 1 5) (mkPos 1 10), TInt 5)
-            , (mkSpan (mkPos 1 11) (mkPos 1 19), TInt 12)
-            , (mkSpan (mkPos 1 20) (mkPos 1 28), TInt 0)
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 4) @: TInt 0
+            , mkSpan (mkPos 1 5) (mkPos 1 10) @: TInt 5
+            , mkSpan (mkPos 1 11) (mkPos 1 19) @: TInt 12
+            , mkSpan (mkPos 1 20) (mkPos 1 28) @: TInt 0
             ]
 
   , testCase "tokenize 'int' literals (base 8)" $
       runLex "0o0 0o123 0o0456 0o007700 0o0000000"
-        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 4), TInt 0)
-            , (mkSpan (mkPos 1 5) (mkPos 1 10), TInt 83)
-            , (mkSpan (mkPos 1 11) (mkPos 1 17), TInt 302)
-            , (mkSpan (mkPos 1 18) (mkPos 1 26), TInt 4032)
-            , (mkSpan (mkPos 1 27) (mkPos 1 36), TInt 0)
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 4) @: TInt 0
+            , mkSpan (mkPos 1 5) (mkPos 1 10) @: TInt 83
+            , mkSpan (mkPos 1 11) (mkPos 1 17) @: TInt 302
+            , mkSpan (mkPos 1 18) (mkPos 1 26) @: TInt 4032
+            , mkSpan (mkPos 1 27) (mkPos 1 36) @: TInt 0
             ]
 
   , testCase "tokenize 'int' literals (base 10)" $
       runLex "0 123 0456 0078900 0000000"
-        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 2), TInt 0)
-            , (mkSpan (mkPos 1 3) (mkPos 1 6), TInt 123)
-            , (mkSpan (mkPos 1 7) (mkPos 1 11), TInt 456)
-            , (mkSpan (mkPos 1 12) (mkPos 1 19), TInt 78900)
-            , (mkSpan (mkPos 1 20) (mkPos 1 27), TInt 0)
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 2) @: TInt 0
+            , mkSpan (mkPos 1 3) (mkPos 1 6) @: TInt 123
+            , mkSpan (mkPos 1 7) (mkPos 1 11) @: TInt 456
+            , mkSpan (mkPos 1 12) (mkPos 1 19) @: TInt 78900
+            , mkSpan (mkPos 1 20) (mkPos 1 27) @: TInt 0
             ]
 
   , testCase "tokenize 'int' literals (base 16)" $
       runLex "0x0 0x123 0x0456 0x0078900 0x0000000"
-        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 4), TInt 0)
-            , (mkSpan (mkPos 1 5) (mkPos 1 10), TInt 291)
-            , (mkSpan (mkPos 1 11) (mkPos 1 17), TInt 1110)
-            , (mkSpan (mkPos 1 18) (mkPos 1 27), TInt 493824)
-            , (mkSpan (mkPos 1 28) (mkPos 1 37), TInt 0)
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 4) @: TInt 0
+            , mkSpan (mkPos 1 5) (mkPos 1 10) @: TInt 291
+            , mkSpan (mkPos 1 11) (mkPos 1 17) @: TInt 1110
+            , mkSpan (mkPos 1 18) (mkPos 1 27) @: TInt 493824
+            , mkSpan (mkPos 1 28) (mkPos 1 37) @: TInt 0
             ]
 
   , testCase "tokenize identifiers" $
       runLex "lorem ipsum-dolor"
-        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 6), TIdent "lorem")
-            , (mkSpan (mkPos 1 7) (mkPos 1 18), TIdent "ipsum-dolor")
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 6) @: TIdent "lorem"
+            , mkSpan (mkPos 1 7) (mkPos 1 18) @: TIdent "ipsum-dolor"
             ]
 
   , testCase "tokenize module paths" $
       runLex "rosa.base"
-        @?= [ (mkSpan (mkPos 1 1) (mkPos 1 10), TModulePath ["rosa", "base"])
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 10) @: TModulePath ["rosa", "base"]
             ]
   ]
