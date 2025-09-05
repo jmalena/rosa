@@ -5,7 +5,11 @@ import Language.Rosa.Ast.Expr
 import Language.Rosa.Ast.Pattern
 
 data Decl
-  = TypeDecl
+  = UseDecl
+    { useDeclAnn  :: SrcSpan
+    , useDeclPath :: ModulePath
+    }
+  | TypeDecl
     { typeDeclAnn :: SrcSpan
     , typeDeclLhs :: Pattern
     , typeDeclRhs :: Expr

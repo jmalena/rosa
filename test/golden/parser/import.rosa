@@ -1,5 +1,7 @@
-import rosa.base
+use cat-me
+use rosa.math
+use rosa.ffi.js
 
-import my-package.my-module-1
-import my-package.my-module-2
-import my-package.my-module-3
+use my-package.math.vector
+use my-package.math.matrix
+use my-package.graphics.canvas

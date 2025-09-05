@@ -24,7 +24,6 @@ library
                         Language.Rosa.Parser
     other-modules:      Language.Rosa.Ast.Decl
                         Language.Rosa.Ast.Expr
-                        Language.Rosa.Ast.ImportDecl
                         Language.Rosa.Ast.Module
                         Language.Rosa.Ast.Pattern
                         Language.Rosa.Core.Annotation

@@ -1,7 +1,5 @@
 module Language.Rosa.Core.ModulePath where
 
-import System.FilePath
-
 type ModulePath = [String]
 
 readModulePath :: String -> ModulePath

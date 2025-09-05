@@ -30,7 +30,7 @@ import Language.Rosa.Parser.Token
   ':='         { Ann (_, TSymbol ":=") }
 
   -- keywords
-  "import"       { Ann (_, TKeyword "import") }
+  "use"        { Ann (_, TKeyword "use") }
 
   -- literals
   bool         { Ann (_, TBool _) }
@@ -63,20 +63,28 @@ many1_rev(p) :: { NE.NonEmpty p }
 ------------------------------------------------------------
 
 module :: { Module }
-  : many(import_decl) many(decl)
+  : many(use_decl) many(decl)
     { Module
-      { moduleImports = $1
-      , moduleDecls = $2
+      { moduleDecls = $1
       }
     }
 
-import_decl :: { ImportDecl }
-  : "import" modulepath
-    { let TModulePath mp = val $2
-      in ImportDecl
-        { importDeclAnn  = ann $1 <+> ann $2
-        , importDeclPath = mp
-        }
+module_path :: { Located ModulePath }
+  : ident
+    { let TIdent s = val $1
+      in (ann $1) @: readModulePath s
+    }
+  | modulepath
+    { let TModulePath mp = val $1
+      in (ann $1) @: mp
+    }
+
+use_decl :: { Decl }
+  : "use" module_path
+    { UseDecl
+      { useDeclAnn  = ann $1 <+> ann $2
+      , useDeclPath = val $2
+      }
     }
 
 decl :: { Decl }
