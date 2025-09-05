@@ -19,21 +19,18 @@ library
     import:             warnings
     exposed-modules:    Language.Rosa.Ast
                         Language.Rosa.Core
-                        -- Language.Rosa.Compiler
                         Language.Rosa.Error
                         Language.Rosa.Monad
                         Language.Rosa.Parser
-    other-modules:      Language.Rosa.Ast.Definitions.VarDefinition
-                        Language.Rosa.Ast.Definitions
-                        Language.Rosa.Ast.Decl
+    other-modules:      Language.Rosa.Ast.Decl
                         Language.Rosa.Ast.Expr
                         Language.Rosa.Ast.ImportDecl
                         Language.Rosa.Ast.Module
+                        Language.Rosa.Ast.Pattern
                         Language.Rosa.Core.Annotation
                         Language.Rosa.Core.ModulePath
                         Language.Rosa.Core.SourceFile
                         Language.Rosa.Core.SourceSpan
-                        -- Language.Rosa.Compiler.Monad
                         Language.Rosa.Parser.Errors
                         Language.Rosa.Parser.Lexer
                         Language.Rosa.Parser.Literal

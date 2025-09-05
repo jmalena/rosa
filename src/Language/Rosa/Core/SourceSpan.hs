@@ -1,5 +1,8 @@
 module Language.Rosa.Core.SourceSpan where
 
+import qualified Data.List.NonEmpty as NE
+import           Data.Semigroup
+
 -- | Represents a single position in a source file.
 --   Line and column numbers are 1-based.
 data SrcPos = SrcPos
@@ -13,11 +16,6 @@ data SrcSpan = SrcSpan
   { start :: !SrcPos
   , end   :: !SrcPos
   } deriving (Eq, Ord, Show)
-
--- | Combine two spans into a span covering both.
---   Uses the Semigroup instance.
-(<+>) :: SrcSpan -> SrcSpan -> SrcSpan
-(<+>) = (<>)
 
 instance Semigroup SrcSpan where
   (<>) (SrcSpan s1 e1) (SrcSpan s2 e2) =
@@ -46,7 +44,14 @@ advancePos (SrcPos l c) ch
 advanceOver :: SrcPos -> String -> SrcPos
 advanceOver = foldl advancePos
 
+-- | Combine two spans into a span covering both.
+(<+>) :: SrcSpan -> SrcSpan -> SrcSpan
+(<+>) = (<>)
+
+-- | Combine non-empty list into a span covering all of them.
+spanCover :: NE.NonEmpty SrcSpan -> SrcSpan
+spanCover = sconcat
+
 -- | Construct a source span of a string on given position.
 spanOver :: SrcPos -> String -> SrcSpan
 spanOver p s = mkSpan p (p `advanceOver` s)
-

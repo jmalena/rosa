@@ -30,8 +30,13 @@ tasty_lexer = testGroup "Lexer"
         @?= []
 
   , testCase "tokenize symbols" $
-      runLex ":="
-        @?= [ mkSpan (mkPos 1 1) (mkPos 1 3) @: TSymbol ":="
+      runLex "( ) _ : -> :="
+        @?= [ mkSpan (mkPos 1 1) (mkPos 1 2) @: TSymbol "("
+            , mkSpan (mkPos 1 3) (mkPos 1 4) @: TSymbol ")"
+            , mkSpan (mkPos 1 5) (mkPos 1 6) @: TSymbol "_"
+            , mkSpan (mkPos 1 7) (mkPos 1 8) @: TSymbol ":"
+            , mkSpan (mkPos 1 9) (mkPos 1 11) @: TSymbol "->"
+            , mkSpan (mkPos 1 12) (mkPos 1 14) @: TSymbol ":="
             ]
 
   , testCase "tokenize keywords" $

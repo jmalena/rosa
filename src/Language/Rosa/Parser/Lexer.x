@@ -24,8 +24,6 @@ import Language.Rosa.Parser.Token
 $return     = [\r]
 $linefeed   = [\n]
 
-$symbol     = [\(\)]
-
 $digit      = [0-9]
 $bindig     = [0-1]
 $octdig     = [0-7]
@@ -37,6 +35,7 @@ $hexdig     = [0-9a-f]
 
 @newline    = $return?$linefeed
 
+@symbol     = \( | \) | \_ | : | \-> | :=
 @keyword    = import
 
 @ident      = [a-z][a-z0-9\-]*
