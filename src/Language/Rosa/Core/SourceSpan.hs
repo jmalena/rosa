@@ -27,11 +27,21 @@ mkPos l c
   | l < 1 || c < 1 = error "Position must have positive line and column"
   | otherwise      = SrcPos l c
 
+-- | Symbolic alias for 'mkPos'.
+infixl 5 .:.
+(.:.) :: Int -> Int -> SrcPos
+(.:.) = mkPos
+
 -- | Construct a source span from two positions.
 mkSpan :: SrcPos -> SrcPos -> SrcSpan
 mkSpan p1 p2
   | p1 <= p2  = SrcSpan p1 p2
   | otherwise = SrcSpan p2 p1
+
+-- | Symbolic alias to 'mkSpan'.
+infixl 4 .-.
+(.-.) :: SrcPos -> SrcPos -> SrcSpan
+(.-.) = mkSpan
 
 -- | Advance a source position by one character.
 advancePos :: SrcPos -> Char -> SrcPos
@@ -45,6 +55,7 @@ advanceOver :: SrcPos -> String -> SrcPos
 advanceOver = foldl advancePos
 
 -- | Combine two spans into a span covering both.
+infixl 5 <+>
 (<+>) :: SrcSpan -> SrcSpan -> SrcSpan
 (<+>) = (<>)
 
