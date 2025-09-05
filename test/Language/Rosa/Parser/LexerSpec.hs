@@ -37,7 +37,7 @@ tasty_lexer = testGroup "Lexer"
 
   , testCase "tokenize keywords" $
       runLex "use"
-        @?= [ 1.:.1 .-. 1.:.7 @: TKeyword "use"
+        @?= [ 1.:.1 .-. 1.:.4 @: TKeyword "use"
             ]
 
   , testCase "tokenize 'bool' literals" $
