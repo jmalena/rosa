@@ -21,20 +21,20 @@ testDir :: FilePath
 testDir = "test" </> "golden" </> "parser"
 
 goldenAstTest :: FilePath -> TestTree
-goldenAstTest srcPath = goldenVsString srcFileName goldenPath runner
+goldenAstTest path = goldenVsString name outPath runner
   where
-    srcFileName = takeFileName srcPath
-    goldenPath = testDir </> addExtension srcFileName outExt
+    name = takeFileName path
+    outPath = testDir </> name <.> outExt
     runner = do
-      srcFile <- FileSource srcPath <$> BL.readFile srcPath
+      inp <- FileInput path <$> BL.readFile path
       pure $
-        case runRosa (runParser parseModule srcFile) of
+        case runRosa (runParser parseModule inp) of
           Left err -> BL.pack $ show err
           Right _ -> BL.empty
 
 tasty_parser :: IO TestTree
 tasty_parser = do
-  srcPaths <- findByExtension [rosaExt] testDir
+  paths <- findByExtension [rosaExt] testDir
   return $
     testGroup "Parser" $
-      [ goldenAstTest srcPath | srcPath <- srcPaths ]
+      [ goldenAstTest p | p <- paths ]

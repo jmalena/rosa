@@ -21,7 +21,7 @@ type ParserInput =
   )
 
 data ParserState = ParserState
-  { curInp  :: ParserInput -- ^ current parser input
+  { curInp :: ParserInput  -- ^ current parser input
   , curScd :: !Int         -- ^ current startcode
   }
 
@@ -41,8 +41,8 @@ setStartCode sc = modify' $ \st -> st { curScd = sc }
 getStartCode :: Parser Int
 getStartCode = gets curScd
 
-runParser :: Parser a -> SourceFile -> Rosa a
-runParser (Parser m) srcFile = evalStateT m st
+runParser :: Parser a -> InputSource -> Rosa a
+runParser (Parser m) inp = evalStateT m st
   where
-    s = srcFileContent srcFile
-    st = ParserState (mkPos 1 1, '\n', s, 0) 0
+    bs = sourceContent inp
+    st = ParserState (mkPos 1 1, '\n', bs, 0) 0

@@ -28,8 +28,8 @@ library
                         Language.Rosa.Ast.Module
                         Language.Rosa.Ast.Pattern
                         Language.Rosa.Core.Annotation
+                        Language.Rosa.Core.InputSource
                         Language.Rosa.Core.ModulePath
-                        Language.Rosa.Core.SourceFile
                         Language.Rosa.Core.SourceSpan
                         Language.Rosa.Parser.Errors
                         Language.Rosa.Parser.Lexer

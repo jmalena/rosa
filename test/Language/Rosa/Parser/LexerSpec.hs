@@ -1,8 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Rosa.Parser.LexerSpec where
-
-import qualified Data.ByteString.Lazy.Char8 as BL
 
 import Language.Rosa.Core
 import Language.Rosa.Monad
@@ -11,9 +7,9 @@ import Language.Rosa.Parser
 import Test.Tasty
 import Test.Tasty.HUnit
 
-runLex :: BL.ByteString -> [Located Token]
-runLex input =
-  case runRosa (runParser tokenize (StdinSource input)) of
+runLex :: String -> [Located Token]
+runLex s =
+  case runRosa (runParser tokenize (InlineInput s)) of
     Left err -> error (show err)
     Right toks -> toks
 
