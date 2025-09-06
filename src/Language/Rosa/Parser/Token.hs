@@ -11,12 +11,15 @@ data Token
   
   -- literals
   | TBool Bool
-  | TInt  Word64
+  | TInt Word64
 
   -- identifiers
   | TIdent String
+
+  -- module paths
   | TModulePath ModulePath
 
-  -- EOF
+  -- structural
+  | TNewlines
   | TEof
  deriving (Eq, Show)

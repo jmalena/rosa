@@ -36,36 +36,66 @@ import Language.Rosa.Parser.Token
   bool         { Ann (_, TBool _) }
   int          { Ann (_, TInt _) }
 
-  -- identifier
+  -- identifiers
   ident        { Ann (_, TIdent _) }
 
-  -- module path
+  -- module paths
   modulepath   { Ann (_, TModulePath _) }
+
+  -- structural
+  newlines     { Ann (_, TNewlines ) }
 %%
 
 ------------------------------------------------------------
 -- Utils
 ------------------------------------------------------------
 
+optional(p) :: { Maybe p }
+  : p                           { Just $1 }
+  | {- empty -}                 { Nothing }
+
 many(p) :: { [p] }
-  : many1(p)       { NE.toList $1 }
-  | {- empty -}    { [] }
+  : many1(p)                    { NE.toList $1 }
+  | {- empty -}                 { [] }
 
 many1(p) :: { NE.NonEmpty p }
-  : many1_rev(p)   { NE.reverse $1 }
+  : many1_rev(p)                { NE.reverse $1 }
 
 many1_rev(p) :: { NE.NonEmpty p }
-  : many1_rev(p) p { NE.cons $2 $1 }
-  | p              { NE.singleton $1 }
+  : many1_rev(p) p              { NE.cons $2 $1 }
+  | p                           { NE.singleton $1 }
+
+many_sep(p, sep) :: { [p] }
+  : many1_sep(p, sep)           { NE.toList $1 }
+  | {- empty -}                 { [] }
+
+many1_sep(p, sep) :: { NE.NonEmpty p }
+  : many1_sep_rev(p, sep)       { NE.reverse $1 }
+
+many1_sep_rev(p, sep) :: { NE.NonEmpty p }
+  : many1_sep_rev(p, sep) sep p { NE.cons $3 $1 }
+  | p                           { NE.singleton $1 }
 
 ------------------------------------------------------------
--- Rules
+-- Module
 ------------------------------------------------------------
 
 module :: { Module }
-  : many(use_decl) many(decl)
+  : many_sep(use_decl, newlines) optional(newlines) many_sep(decl, newlines)
     { Module
-      { moduleDecls = $1
+      { moduleDecls = $1 ++ $3
+      }
+    }
+
+------------------------------------------------------------
+-- Top-level declarations
+------------------------------------------------------------
+
+use_decl :: { Decl }
+  : "use" module_path
+    { UseDecl
+      { useDeclAnn  = ann $1 <+> ann $2
+      , useDeclPath = val $2
       }
     }
 
@@ -79,15 +109,9 @@ module_path :: { Located ModulePath }
       in (ann $1) @: mp
     }
 
-use_decl :: { Decl }
-  : "use" module_path
-    { UseDecl
-      { useDeclAnn  = ann $1 <+> ann $2
-      , useDeclPath = val $2
-      }
-    }
-
+-- | Top-level declaration rule without the "use_decl" rule for package import.
 decl :: { Decl }
+  -- type declaration
   : ident ':' expr
     { let TIdent name = val $1
       in TypeDecl
@@ -96,16 +120,21 @@ decl :: { Decl }
          , typeDeclRhs = $3
          }
     }
+  -- definition
   | ident many(pattern) ':=' expr
     { let TIdent name = val $1
       in DefDecl
-         { defDeclAnn = (patSpan $1 $2) <+> ann $4
+         { defDeclAnn = ann $1 <+> ann $4
          , defDeclLhs = PCon (patSpan $1 $2) name $2
          , defDeclRhs = $4
          }
-     }
+  }
 
--- | Top-level expression rule with "->" handling (right-associative).
+------------------------------------------------------------
+-- Expressions
+------------------------------------------------------------
+
+-- | Expression rule with "->" handling (right-associative).
 expr :: { Expr }
   : app_expr '->' expr
     -- NOTE: `a -> b` is treated as a non-dependent Π-type where the argument is unused.
@@ -135,6 +164,10 @@ term :: { Expr }
     }
   | '(' expr ')'
     { setAnn (ann $1 <+> ann $3) $2 }
+
+------------------------------------------------------------
+-- Patterns
+------------------------------------------------------------
 
 pattern :: { Pattern }
   : ident

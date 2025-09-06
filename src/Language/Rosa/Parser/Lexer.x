@@ -33,7 +33,7 @@ $hexdig     = [0-9a-f]
 -- Regular expressions
 ------------------------------------------------------------
 
-@newline    = $return?$linefeed
+@newlines   = ($return?$linefeed)+
 
 @symbol     = \( | \) | \_ | : | \-> | :=
 @keyword    = use
@@ -47,19 +47,20 @@ $hexdig     = [0-9a-f]
 ------------------------------------------------------------
 tokens :-
   -- white spaces
+  <0> @newlines                           { token TNewlines }
   <0> $white+                             ;
 
   -- states
-  <0> "--"                                { begin linecom }
-  <0> "|-"                                { begin blockcom }
+  <0> "--"                                { begin linecom skip }
+  <0> "|-"                                { begin blockcom skip }
 
   -- special
   <0> @symbol			          { tokenF TSymbol }
   <0> @keyword			          { tokenF TKeyword }
 
   -- literals
-  <0> "true"                              { token $ TBool True }
-  <0> "false"                             { token $ TBool False }
+  <0> "true"                              { token (TBool True) }
+  <0> "false"                             { token (TBool False) }
   <0> "0b" $bindig+                       { tokenM (fmap TInt . expectEither . readBase 2 . drop 2) }
   <0> "0o" $octdig+                       { tokenM (fmap TInt . expectEither . readBase 8 . drop 2) }
   <0>      $digit+                        { tokenM (fmap TInt . expectEither . readBase 10) }
@@ -72,12 +73,12 @@ tokens :-
   <0> @modulepath                         { tokenF (TModulePath . readModulePath) }
 
   -- line comments
-  <linecom> @newline                      { begin 0 }
+  <linecom> @newlines                     { begin 0 (token TNewlines) }
   <linecom> .			          ;
 
   -- block comments
-  <blockcom> "-|"                         { begin 0 }
-  <blockcom> @newline                     ;
+  <blockcom> "-|"                         { begin 0 skip }
+  <blockcom> @newlines                    ;
   <blockcom> .			          ;
 
 {
@@ -87,18 +88,25 @@ tokens :-
 
 type Action a = SrcSpan -> String -> Parser a
 
-begin :: Int -> Action (Located Token)
-begin sc _ _ = do
-  setStartCode sc
-  nextToken
+-- | Skip the current lexer match.
+skip :: Action (Located Token)
+skip _ _ = nextToken
 
+-- | Sets the lexer start code and then performs the Alex action.
+begin :: Int -> Action (Located Token) -> Action (Located Token)
+begin sc act sp s = do
+  setStartCode sc
+  act sp s
+
+-- | Lifts a token into an Alex action.
 token :: Token -> Action (Located Token)
 token = tokenM . const . pure
 
+-- | Alex action mapping a lexer match into a 'Token'.
 tokenF :: (String -> Token) -> Action (Located Token)
 tokenF f = tokenM (pure . f)
 
-
+-- | Alex action mapping a lexer match into a 'Token' using a parser action.
 tokenM :: (String -> Parser Token) -> Action (Located Token)
 tokenM f sp s = do
   tc <- f s
