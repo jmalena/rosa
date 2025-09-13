@@ -1,0 +1,4 @@
+--| Wildcard pattern should parse correctly.
+
+ignore : a -> Int
+ignore _ = 0

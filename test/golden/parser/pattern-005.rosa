@@ -1,0 +1,16 @@
+--| Nested constructor pattern should parse correctly.
+
+scott Tree : Type -> Type
+Tree a =
+  (leaf : a -> r) ->
+  (node : Tree a -> a -> r) ->
+  r
+
+cons Leaf : {a : Type} -> a -> Tree a
+Leaf {a} x = \leaf _ => leaf x
+
+cons Node : {a : Type} -> Tree a -> a -> Tree a
+Node {a} left x = \_ node => node left x
+
+value : Tree a -> a
+value (Node (Leaf x) y) = y

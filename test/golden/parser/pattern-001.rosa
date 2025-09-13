@@ -1,0 +1,4 @@
+--| Variable pattern should parse correctly.
+
+id : x -> x
+id x = x

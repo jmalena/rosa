@@ -1,0 +1,16 @@
+--| Complex nested pattern should parse correctly.
+
+scott List : Type -> Type
+List a =
+  (nil  : r) ->
+  (cons : a -> List a -> r) ->
+  r
+
+cons Nil : {a : Type} -> List a
+Nil {a} = \nil _ => nil
+
+cons Cons : {a : Type} -> a -> List a -> List a
+Cons {a} x xs = \_ cons => cons x xs
+
+flatten : Tree a -> List a
+flatten (Cons (Leaf 1) (Cons 2 _)) = Cons 1 (Cons 2 Nil)
