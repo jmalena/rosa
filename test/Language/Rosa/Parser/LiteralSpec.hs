@@ -9,7 +9,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 tasty_literal :: TestTree
-tasty_literal = testGroup "Literal.readBase"
+tasty_literal = testGroup "Parser.Literal"
   [ testCase "binary literals" $ do
       readBase 2 "0"   @?= Right 0
       readBase 2 "1"   @?= Right 1

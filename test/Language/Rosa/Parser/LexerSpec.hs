@@ -14,7 +14,7 @@ runLex s =
     Right toks -> toks
 
 tasty_lexer :: TestTree
-tasty_lexer = testGroup "Lexer"
+tasty_lexer = testGroup "Parser.Lexer"
   [ testCase "ignore whitespaces" $
       runLex " \n \n \t\n\n\t  "
         @?= []
