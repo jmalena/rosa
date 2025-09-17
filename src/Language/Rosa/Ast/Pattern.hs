@@ -2,24 +2,13 @@
 
 module Language.Rosa.Ast.Pattern where
 
-import Language.Rosa.Core
+type family XPCon      p
+type family XPVar      p
+type family XPInt      p
+type family XPWildcard p
 
-data Pattern
-  = PCon SrcSpan String [Pattern] -- ^ applied constructor
-  | PVar SrcSpan String           -- ^ variable name
-  | PInt SrcSpan Word             -- ^ integer literal
-  | PWildcard SrcSpan             -- ^ wildcard "_"
-  deriving (Eq, Show)
-
-instance HasAnn Pattern where
-  type AnnType Pattern = SrcSpan
-
-  ann (PCon a _ _)  = a
-  ann (PVar a _)    = a
-  ann (PInt a _)    = a
-  ann (PWildcard a) = a
-
-  setAnn a' (PCon _ name args) = PCon a' name args
-  setAnn a' (PVar _ name)      = PVar a' name
-  setAnn a' (PInt _ x)         = PInt a' x
-  setAnn a' (PWildcard _)      = PWildcard a'
+data Pattern p
+  = PCon (XPCon p) String [Pattern p] -- ^ applied constructor
+  | PVar (XPVar p) String             -- ^ variable name
+  | PInt (XPInt p) Word               -- ^ integer literal
+  | PWildcard (XPWildcard p)          -- ^ wildcard "_"

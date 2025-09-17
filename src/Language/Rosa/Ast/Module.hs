@@ -2,7 +2,6 @@ module Language.Rosa.Ast.Module where
 
 import Language.Rosa.Ast.Decl
 
-data Module = Module
-  { moduleDecls :: [Decl]
+data Module p = Module
+  { moduleDecls :: [Decl p]
   }
-  deriving (Eq, Show)

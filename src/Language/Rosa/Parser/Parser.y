@@ -7,6 +7,7 @@ import qualified Data.List.NonEmpty         as NE
 import Language.Rosa.Ast
 import Language.Rosa.Core
 import Language.Rosa.Error
+import Language.Rosa.Parser.Annotations
 import Language.Rosa.Parser.Errors
 import Language.Rosa.Parser.Monad
 import Language.Rosa.Parser.Lexer
@@ -80,7 +81,7 @@ many1_sep_rev(p, sep) :: { NE.NonEmpty p }
 -- Module
 ------------------------------------------------------------
 
-module :: { Module }
+module :: { Module ParserPhase }
   : many_sep(use_decl, newlines) optional(newlines) many_sep(decl, newlines)
     { Module
       { moduleDecls = $1 ++ $3
@@ -92,7 +93,7 @@ module :: { Module }
 ------------------------------------------------------------
 
 -- | Top-level declaration for module import.
-use_decl :: { Decl }
+use_decl :: { Decl ParserPhase }
   : "use" module_path
     { UseModule
       { useModuleAnn  = ann $1 <+> ann $2
@@ -101,7 +102,7 @@ use_decl :: { Decl }
     }
 
 -- | Top-level declaration (except for the "use module" rule).
-decl :: { Decl }
+decl :: { Decl ParserPhase }
   -- type signature
   : ident ':' expr
     { let TIdent id = val $1
@@ -135,7 +136,7 @@ decl :: { Decl }
 ------------------------------------------------------------
 
 -- | Expression rule with "->" handling (right-associative).
-expr :: { Expr }
+expr :: { Expr ParserPhase }
   : app_expr '->' expr
     -- NOTE: `a -> b` is treated as a non-dependent Π-type where the argument is unused.
     { Pi (ann $1 <+> ann $3) (PWildcard (ann $1)) $1 $3 }
@@ -143,20 +144,20 @@ expr :: { Expr }
     { $1 }
 
 -- | Expression rule with function application (left-associative).
-app_expr :: { Expr }
+app_expr :: { Expr ParserPhase }
   : app_expr term
     { App (ann $1 <+> ann $2) $1 $2 }
   | term
     { $1 }
 
-term :: { Expr }
+term :: { Expr ParserPhase }
   : bool
     { let TBool b = val $1
-      in ValueBool (ann $1) b
+      in BoolLit (ann $1) b
     }
   | int
     { let TInt i = val $1
-      in ValueInt (ann $1) i
+      in IntLit (ann $1) i
     }
   | ident
     { let TIdent s = val $1
@@ -169,7 +170,7 @@ term :: { Expr }
 -- Patterns
 ------------------------------------------------------------
 
-pattern :: { Pattern }
+pattern :: { Pattern ParserPhase }
   : ident
     { let TIdent name = val $1
       in PVar (ann $1) name
@@ -183,7 +184,7 @@ pattern :: { Pattern }
   | '(' pattern_inner ')'
     { setAnn (ann $1 <+> ann $3) $2 }
 
-pattern_inner :: { Pattern }
+pattern_inner :: { Pattern ParserPhase }
   : ident many1(pattern)
     { let TIdent name = val $1
       in PCon (ann $1 <+> ann (NE.last $2)) name (NE.toList $2)

@@ -30,6 +30,7 @@ library
                         Language.Rosa.Core.InputSource
                         Language.Rosa.Core.ModulePath
                         Language.Rosa.Core.SourceSpan
+                        Language.Rosa.Parser.Annotations
                         Language.Rosa.Parser.Errors
                         Language.Rosa.Parser.Lexer
                         Language.Rosa.Parser.Literal
