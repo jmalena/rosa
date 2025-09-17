@@ -35,7 +35,7 @@ $hexdig     = [0-9a-f]
 
 @newlines   = ($return?$linefeed)+
 
-@symbol     = \( | \) | \_ | : | \-> | :=
+@symbol     = \( | \) | _ | : | \-> | :=
 @keyword    = use
 
 @ident      = [a-z][a-z0-9\-]*

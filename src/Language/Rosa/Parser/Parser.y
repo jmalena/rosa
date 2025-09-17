@@ -91,42 +91,42 @@ module :: { Module }
 -- Top-level declarations
 ------------------------------------------------------------
 
+-- | Top-level declaration for module import.
 use_decl :: { Decl }
   : "use" module_path
-    { UseDecl
-      { useDeclAnn  = ann $1 <+> ann $2
-      , useDeclPath = val $2
+    { UseModule
+      { useModuleAnn  = ann $1 <+> ann $2
+      , useModulePath = val $2
       }
     }
 
-module_path :: { Located ModulePath }
-  : ident
-    { let TIdent s = val $1
-      in (ann $1) @: readModulePath s
-    }
-  | modulepath
-    { let TModulePath mp = val $1
-      in (ann $1) @: mp
-    }
-
--- | Top-level declaration rule without the "use_decl" rule for package import.
+-- | Top-level declaration (except for the "use module" rule).
 decl :: { Decl }
-  -- type declaration
+  -- type signature
   : ident ':' expr
-    { let TIdent name = val $1
-      in TypeDecl
-         { typeDeclAnn = ann $1 <+> ann $3
-         , typeDeclLhs = PVar (ann $1) name
-         , typeDeclRhs = $3
+    { let TIdent id = val $1
+      in TySign
+         { tySignAnn = ann $1 <+> ann $3
+         , tySignId  = id
+         , tySignRhs = $3
          }
-    }
-  -- definition
-  | ident many(pattern) ':=' expr
-    { let TIdent name = val $1
-      in DefDecl
-         { defDeclAnn = ann $1 <+> ann $4
-         , defDeclLhs = PCon (patSpan $1 $2) name $2
-         , defDeclRhs = $4
+     }
+   -- pattern bind
+  | pattern ':=' expr
+    { PatBind
+      { patBindAnn = ann $1 <+> ann $3
+      , patBindLhs = $1
+      , patBindRhs = $3
+      }
+  }
+  -- function bind
+  | ident many1(pattern) ':=' expr
+    { let TIdent id = val $1
+      in FunBind
+         { funBindAnn     = ann $1 <+> ann $4
+         , funBindId      = id
+         , funBindMatches = $2
+         , funBindRhs     = $4
          }
   }
 
@@ -151,16 +151,16 @@ app_expr :: { Expr }
 
 term :: { Expr }
   : bool
-    { let TBool x = val $1
-      in ValueBool (ann $1) x
+    { let TBool b = val $1
+      in ValueBool (ann $1) b
     }
   | int
-    { let TInt x = val $1
-      in ValueInt (ann $1) x
+    { let TInt i = val $1
+      in ValueInt (ann $1) i
     }
   | ident
-    { let TIdent f = val $1
-      in Var (ann $1) f
+    { let TIdent s = val $1
+      in Var (ann $1) s
     }
   | '(' expr ')'
     { setAnn (ann $1 <+> ann $3) $2 }
@@ -191,11 +191,21 @@ pattern_inner :: { Pattern }
   | pattern
     { $1 }
 
-{
--- NOTE: we have this function because let with multiple values is somehow not working in Happy syntax...
-patSpan id [] = ann id
-patSpan id ps = ann id <+> ann (last ps)
+------------------------------------------------------------
+-- Others
+------------------------------------------------------------
 
+module_path :: { Located ModulePath }
+  : ident
+    { let TIdent s = val $1
+      in (ann $1) @: readModulePath s
+    }
+  | modulepath
+    { let TModulePath mp = val $1
+      in (ann $1) @: mp
+    }
+
+{
 lexer :: (Located Token -> Parser a) -> Parser a
 lexer = (nextToken >>=)
 
