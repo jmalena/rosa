@@ -1,7 +1,0 @@
-use cat-me
-use rosa.math
-use rosa.ffi.js
-
-use my-package.math.vector
-use my-package.math.matrix
-use my-package.graphics.canvas
