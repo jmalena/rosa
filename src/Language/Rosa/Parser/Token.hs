@@ -1,7 +1,5 @@
 module Language.Rosa.Parser.Token where
 
-import Data.Word
-
 import Language.Rosa.Core
 
 data Token
@@ -11,7 +9,7 @@ data Token
   
   -- literals
   | TBool Bool
-  | TInt Word64
+  | TInt Word
 
   -- identifiers
   | TIdent String
