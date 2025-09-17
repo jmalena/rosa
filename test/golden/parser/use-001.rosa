@@ -1,0 +1,9 @@
+--| Use of module or module path should correctly parse.
+
+use cat-me
+use rosa.math
+use rosa.ffi.js
+
+use my-package.math.vector
+use my-package.math.matrix
+use my-package.graphics.canvas
