@@ -1,4 +1,4 @@
 --| Type ascriptions should parse correctly.
 
-theId : {a : Type} -> a -> a
-theId := (\x => x : a -> a)
+id : {a : type} -> a -> a
+id x = x

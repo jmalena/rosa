@@ -1,0 +1,3 @@
+--| Type signature declaration should parse correctly.
+
+id : {a : type} -> a -> a

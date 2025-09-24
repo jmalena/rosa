@@ -1,7 +1,7 @@
 --| Universe levels should parse correctly.
 
-Type0 : Type
-Type0 := Type
+t0 : type
+t0 := type
 
-Type1 : Type 1
-Type1 := Type 1
+t1 : type 1
+t1 := type 1

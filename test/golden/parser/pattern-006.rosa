@@ -1,4 +1,4 @@
 --| Parenthesized variable pattern should fail.
 
 id : x -> x
-id (x) = x
+id (x) := x

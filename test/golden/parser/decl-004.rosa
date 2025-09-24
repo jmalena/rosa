@@ -1,0 +1,3 @@
+--| Function binding with multiple patterns should parse correctly.
+
+add x y := x + y

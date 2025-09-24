@@ -1,4 +1,4 @@
 --| Let bindings should parse correctly.
 
-example : Int
-example := let x := 42 in x
+example : nat
+example := let x := 41 in x

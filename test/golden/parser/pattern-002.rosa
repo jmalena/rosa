@@ -1,4 +1,4 @@
 --| Integer literal pattern should parse correctly.
 
-const42 : Int -> Int
-const42 42 = 42
+const-42 : nat -> nat
+const-42 42 := 42

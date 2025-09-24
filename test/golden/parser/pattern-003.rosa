@@ -1,4 +1,4 @@
 --| Wildcard pattern should parse correctly.
 
-ignore : a -> Int
-ignore _ = 0
+ignore : {a : type} -> a -> nat
+ignore _ := 0

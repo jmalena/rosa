@@ -1,16 +1,16 @@
 --| Constructor pattern with arguments should parse correctly.
 
-scott List : Type -> Type
-List a =
+scott list : type -> type
+list a :=
   (nil  : r) ->
-  (cons : a -> List a -> r) ->
+  (cons : a -> list a -> r) ->
   r
 
-cons Nil : {a : Type} -> List a
-Nil {a} = \nil _ => nil
+cons nil : {a : type} -> list a
+nil {a} := \nil _ => nil
 
-cons Cons : {a : Type} -> a -> List a -> List a
-Cons {a} x xs = \_ cons => cons x xs
+cons cons : {a : type} -> a -> list a -> list a
+cons {a} x xs := \_ cons => cons x xs
 
-head : List a -> a
-head (Cons x y) = x
+head : list a -> a
+head (cons x _) := x

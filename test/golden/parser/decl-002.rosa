@@ -1,0 +1,4 @@
+--| Pattern binding declaration should parse correctly.
+
+x : nat
+x := 42

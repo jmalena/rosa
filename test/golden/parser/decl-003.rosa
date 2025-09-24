@@ -1,0 +1,4 @@
+--| Function binding declaration should parse correctly.
+
+id : {a : type} -> a -> a
+id x := x

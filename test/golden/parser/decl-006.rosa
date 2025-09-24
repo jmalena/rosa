@@ -1,0 +1,4 @@
+--| Type signature and matching function binding should parse correctly.
+
+id : {a : type} -> a -> a
+id x := x
