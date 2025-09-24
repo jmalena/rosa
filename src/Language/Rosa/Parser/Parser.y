@@ -38,7 +38,7 @@ import Language.Rosa.Parser.Token
   "use"        { Ann (_, TKeyword "use") }
   "let"        { Ann (_, TKeyword "let") }
   "in"         { Ann (_, TKeyword "in") }
-  "Type"       { Ann (_, TKeyword "Type") }
+  "type"       { Ann (_, TKeyword "type") }
 
   -- literals
   bool         { Ann (_, TBool _) }
@@ -147,9 +147,9 @@ term :: { Expr ParserPhase }
     { Fix (Abs (ann $1 <+> ann $4) $2 $4) }
   | '(' pattern ':' expr ')' '->' expr
     { Fix (Pi (ann $1 <+> ann $6) $2 $4 $7) }
-  | "Type"
+  | "type"
     { Fix (Universe (ann $1) 0) }
-  | "Type" int
+  | "type" int
     { let TInt n = val $2
       in Fix (Universe (ann $1 <+> ann $2) (fromIntegral n))
     }
