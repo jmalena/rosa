@@ -7,7 +7,6 @@ import qualified Data.List.NonEmpty as NE
 
 import Language.Rosa.Core
 import Language.Rosa.Ast.Expr
-import Language.Rosa.Ast.Pattern
 
 type family XUseModule p
 type family XTySign    p

@@ -69,7 +69,6 @@ module :: { Module ParserPhase }
 -- Declarations (top-level)
 ------------------------------------------------------------
 
--- | Top-level declaration for module import.
 use_decl :: { Decl ParserPhase }
   : "use" module_path
     { UseModule
@@ -78,7 +77,6 @@ use_decl :: { Decl ParserPhase }
       }
     }
 
--- | Top-level declaration (except for the "use module" rule).
 decl :: { Decl ParserPhase }
   -- type signature
   : ident ':' expr
@@ -114,7 +112,7 @@ decl :: { Decl ParserPhase }
 
 expr :: { Expr ParserPhase }
   : app_expr ':' expr
-    { Fix (Ty (ann $1 <+> ann $3) $1 $3) }
+    { Fix (Asc (ann $1 <+> ann $3) $1 $3) }
   | app_expr '->' expr
     { Fix (Pi (ann $1 <+> ann $3) (Fix (PWildcard (ann $1))) $1 $3) }
   | app_expr
@@ -127,7 +125,13 @@ app_expr :: { Expr ParserPhase }
     { $1 }
 
 term :: { Expr ParserPhase }
-  : bool
+  : "type"
+    { Fix (Uni (ann $1) 0) }
+  | "type" int
+    { let TInt n = val $2
+      in Fix (Uni (ann $1 <+> ann $2) (fromIntegral n))
+    }
+  | bool
     { let TBool b = val $1
       in Fix (BoolLit (ann $1) b)
     }
@@ -139,29 +143,26 @@ term :: { Expr ParserPhase }
     { let TIdent s = val $1
       in Fix (Var (ann $1) s)
     }
-  | '(' expr ')'
-    { setAnn (ann $1 <+> ann $3) $2 }
   | '{' expr '}'
-    { Fix (ImpApp (ann $1 <+> ann $3) $2) }
+    { Fix (Imp (ann $1 <+> ann $3) $2) }
   | '\\' pattern '.' expr
     { Fix (Abs (ann $1 <+> ann $4) $2 $4) }
   | '(' pattern ':' expr ')' '->' expr
     { Fix (Pi (ann $1 <+> ann $6) $2 $4 $7) }
-  | "type"
-    { Fix (Universe (ann $1) 0) }
-  | "type" int
-    { let TInt n = val $2
-      in Fix (Universe (ann $1 <+> ann $2) (fromIntegral n))
-    }
   | "let" pattern ':=' expr "in" expr
     { Fix (Let (ann $1 <+> ann $6) $2 $4 $6) }
+  | '(' expr ')'
+    { setAnn (ann $1 <+> ann $3) $2 }
+
 
 ------------------------------------------------------------
 -- Patterns
 ------------------------------------------------------------
 
 pattern :: { Pattern ParserPhase }
-  : int
+  : '_'
+    { Fix (PWildcard (ann $1)) }
+  | int
     { let TInt x = val $1
       in Fix (PInt (ann $1) x)
     }
@@ -169,18 +170,16 @@ pattern :: { Pattern ParserPhase }
     { let TIdent name = val $1
       in Fix (PVar (ann $1) name)
     }
-  | '_'
-    { Fix (PWildcard (ann $1)) }
-  | '(' pattern_inner ')'
-    { setAnn (ann $1 <+> ann $3) $2 }
   | '{' ident '}'
     { let TIdent s = val $2
-      in Fix (PImp (ann $1 <+> ann $3) s)
+      in Fix (PVarImp (ann $1 <+> ann $3) s Nothing)
     }
   | '{' ident ':' expr '}'
     { let TIdent s = val $2
-      in Fix (PImpTy (ann $1 <+> ann $5) s $4)
+      in Fix (PVarImp (ann $1 <+> ann $5) s (Just $4))
     }
+  | '(' pattern_inner ')'
+    { setAnn (ann $1 <+> ann $3) $2 }
 
 pattern_inner :: { Pattern ParserPhase }
   : ident many1(pattern)
