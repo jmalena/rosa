@@ -1,0 +1,4 @@
+--| Dependent Pi type should parse correctly.
+
+depPi : (a : Type) -> (x : a) -> a
+depPi := \a x => x

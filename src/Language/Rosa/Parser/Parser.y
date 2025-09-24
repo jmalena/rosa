@@ -29,9 +29,14 @@ import Language.Rosa.Parser.Token
   ':'          { Ann (_, TSymbol ":") }
   '->'         { Ann (_, TSymbol "->") }
   ':='         { Ann (_, TSymbol ":=") }
+  '.'          { Ann (_, TSymbol ".") }
+  '\\'         { Ann (_, TSymbol "\\") }
 
   -- keywords
   "use"        { Ann (_, TKeyword "use") }
+  "let"        { Ann (_, TKeyword "let") }
+  "in"         { Ann (_, TKeyword "in") }
+  "Type"       { Ann (_, TKeyword "Type") }
 
   -- literals
   bool         { Ann (_, TBool _) }
@@ -46,36 +51,6 @@ import Language.Rosa.Parser.Token
   -- structural
   newlines     { Ann (_, TNewlines ) }
 %%
-
-------------------------------------------------------------
--- Utils
-------------------------------------------------------------
-
-optional(p) :: { Maybe p }
-  : p                           { Just $1 }
-  | {- empty -}                 { Nothing }
-
-many(p) :: { [p] }
-  : many1(p)                    { NE.toList $1 }
-  | {- empty -}                 { [] }
-
-many1(p) :: { NE.NonEmpty p }
-  : many1_rev(p)                { NE.reverse $1 }
-
-many1_rev(p) :: { NE.NonEmpty p }
-  : many1_rev(p) p              { NE.cons $2 $1 }
-  | p                           { NE.singleton $1 }
-
-many_sep(p, sep) :: { [p] }
-  : many1_sep(p, sep)           { NE.toList $1 }
-  | {- empty -}                 { [] }
-
-many1_sep(p, sep) :: { NE.NonEmpty p }
-  : many1_sep_rev(p, sep)       { NE.reverse $1 }
-
-many1_sep_rev(p, sep) :: { NE.NonEmpty p }
-  : many1_sep_rev(p, sep) sep p { NE.cons $3 $1 }
-  | p                           { NE.singleton $1 }
 
 ------------------------------------------------------------
 -- Module
@@ -112,7 +87,7 @@ decl :: { Decl ParserPhase }
          , tySignRhs = $3
          }
      }
-   -- pattern bind
+  -- pattern bind
   | pattern ':=' expr
     { PatBind
       { patBindAnn = ann $1 <+> ann $3
@@ -135,15 +110,14 @@ decl :: { Decl ParserPhase }
 -- Expressions
 ------------------------------------------------------------
 
--- | Expression rule with "->" handling (right-associative).
 expr :: { Expr ParserPhase }
-  : app_expr '->' expr
-    -- NOTE: `a -> b` is treated as a non-dependent Π-type where the argument is unused.
+  : app_expr ':' expr
+    { Typed (ann $1 <+> ann $3) $1 $3 }
+  | app_expr '->' expr
     { Pi (ann $1 <+> ann $3) (PWildcard (ann $1)) $1 $3 }
   | app_expr
     { $1 }
 
--- | Expression rule with function application (left-associative).
 app_expr :: { Expr ParserPhase }
   : app_expr term
     { App (ann $1 <+> ann $2) $1 $2 }
@@ -153,18 +127,26 @@ app_expr :: { Expr ParserPhase }
 term :: { Expr ParserPhase }
   : bool
     { let TBool b = val $1
-      in BoolLit (ann $1) b
-    }
+      in BoolLit (ann $1) b }
   | int
     { let TInt i = val $1
-      in IntLit (ann $1) i
-    }
+      in IntLit (ann $1) i }
   | ident
     { let TIdent s = val $1
-      in Var (ann $1) s
-    }
+      in Var (ann $1) s }
   | '(' expr ')'
     { setAnn (ann $1 <+> ann $3) $2 }
+  | '\\' pattern '.' expr
+    { Abs (ann $1 <+> ann $4) $2 $4 }
+  | '(' pattern ':' expr ')' '->' expr
+    { Pi (ann $1 <+> ann $6) $2 $4 $7 }
+  | "Type" int
+    { let TInt lvl = val $2
+      in Universe (ann $1 <+> ann $2) (fromIntegral lvl) }
+  | "Type"
+    { Universe (ann $1) 0 }
+  | "let" pattern ':=' expr "in" expr
+    { Let (ann $1 <+> ann $6) $2 $4 $6 }
 
 ------------------------------------------------------------
 -- Patterns
@@ -204,7 +186,37 @@ module_path :: { Located ModulePath }
   | modulepath
     { let TModulePath mp = val $1
       in (ann $1) @: mp
-    }
+  }
+
+------------------------------------------------------------
+-- Utils
+------------------------------------------------------------
+
+optional(p) :: { Maybe p }
+  : p                           { Just $1 }
+  | {- empty -}                 { Nothing }
+
+many(p) :: { [p] }
+  : many1(p)                    { NE.toList $1 }
+  | {- empty -}                 { [] }
+
+many1(p) :: { NE.NonEmpty p }
+  : many1_rev(p)                { NE.reverse $1 }
+
+many1_rev(p) :: { NE.NonEmpty p }
+  : many1_rev(p) p              { NE.cons $2 $1 }
+  | p                           { NE.singleton $1 }
+
+many_sep(p, sep) :: { [p] }
+  : many1_sep(p, sep)           { NE.toList $1 }
+  | {- empty -}                 { [] }
+
+many1_sep(p, sep) :: { NE.NonEmpty p }
+  : many1_sep_rev(p, sep)       { NE.reverse $1 }
+
+many1_sep_rev(p, sep) :: { NE.NonEmpty p }
+  : many1_sep_rev(p, sep) sep p { NE.cons $3 $1 }
+  | p                           { NE.singleton $1 }
 
 {
 lexer :: (Located Token -> Parser a) -> Parser a

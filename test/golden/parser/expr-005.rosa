@@ -1,0 +1,4 @@
+--| Let bindings should parse correctly.
+
+example : Int
+example := let x := 42 in x

@@ -1,0 +1,7 @@
+--| Combination of let, lambda, and Pi should parse correctly.
+
+compose : {a : Type} -> {b : Type} -> {c : Type} -> 
+          (b -> c) -> (a -> b) -> a -> c
+compose f g := 
+  let h := \x => f (g x) 
+  in h

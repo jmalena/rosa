@@ -1,0 +1,4 @@
+--| Lambda abstraction should parse correctly.
+
+id : {a : Type} -> a -> a
+id {a} x := \y => y
