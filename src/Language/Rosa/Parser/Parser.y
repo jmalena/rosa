@@ -25,6 +25,8 @@ import Language.Rosa.Parser.Token
   -- symbols
   '('          { Ann (_, TSymbol "(") }
   ')'          { Ann (_, TSymbol ")") }
+  '{'          { Ann (_, TSymbol "{") }
+  '}'          { Ann (_, TSymbol "}") }
   '_'          { Ann (_, TSymbol "_") }
   ':'          { Ann (_, TSymbol ":") }
   '->'         { Ann (_, TSymbol "->") }
@@ -64,7 +66,7 @@ module :: { Module ParserPhase }
     }
 
 ------------------------------------------------------------
--- Top-level declarations
+-- Declarations (top-level)
 ------------------------------------------------------------
 
 -- | Top-level declaration for module import.
@@ -86,7 +88,7 @@ decl :: { Decl ParserPhase }
          , tySignId  = id
          , tySignRhs = $3
          }
-     }
+    }
   -- pattern bind
   | pattern ':=' expr
     { PatBind
@@ -94,7 +96,7 @@ decl :: { Decl ParserPhase }
       , patBindLhs = $1
       , patBindRhs = $3
       }
-  }
+    }
   -- function bind
   | ident many1(pattern) ':=' expr
     { let TIdent id = val $1
@@ -104,7 +106,7 @@ decl :: { Decl ParserPhase }
          , funBindMatches = $2
          , funBindRhs     = $4
          }
-  }
+    }
 
 ------------------------------------------------------------
 -- Expressions
@@ -112,70 +114,84 @@ decl :: { Decl ParserPhase }
 
 expr :: { Expr ParserPhase }
   : app_expr ':' expr
-    { Typed (ann $1 <+> ann $3) $1 $3 }
+    { Fix (Ty (ann $1 <+> ann $3) $1 $3) }
   | app_expr '->' expr
-    { Pi (ann $1 <+> ann $3) (PWildcard (ann $1)) $1 $3 }
+    { Fix (Pi (ann $1 <+> ann $3) (Fix (PWildcard (ann $1))) $1 $3) }
   | app_expr
     { $1 }
 
 app_expr :: { Expr ParserPhase }
   : app_expr term
-    { App (ann $1 <+> ann $2) $1 $2 }
+    { Fix (App (ann $1 <+> ann $2) $1 $2) }
   | term
     { $1 }
 
 term :: { Expr ParserPhase }
   : bool
     { let TBool b = val $1
-      in BoolLit (ann $1) b }
+      in Fix (BoolLit (ann $1) b)
+    }
   | int
-    { let TInt i = val $1
-      in IntLit (ann $1) i }
+    { let TInt n = val $1
+      in Fix (IntLit (ann $1) n)
+    }
   | ident
     { let TIdent s = val $1
-      in Var (ann $1) s }
+      in Fix (Var (ann $1) s)
+    }
   | '(' expr ')'
     { setAnn (ann $1 <+> ann $3) $2 }
+  | '{' expr '}'
+    { Fix (ImpApp (ann $1 <+> ann $3) $2) }
   | '\\' pattern '.' expr
-    { Abs (ann $1 <+> ann $4) $2 $4 }
+    { Fix (Abs (ann $1 <+> ann $4) $2 $4) }
   | '(' pattern ':' expr ')' '->' expr
-    { Pi (ann $1 <+> ann $6) $2 $4 $7 }
-  | "Type" int
-    { let TInt lvl = val $2
-      in Universe (ann $1 <+> ann $2) (fromIntegral lvl) }
+    { Fix (Pi (ann $1 <+> ann $6) $2 $4 $7) }
   | "Type"
-    { Universe (ann $1) 0 }
+    { Fix (Universe (ann $1) 0) }
+  | "Type" int
+    { let TInt n = val $2
+      in Fix (Universe (ann $1 <+> ann $2) (fromIntegral n))
+    }
   | "let" pattern ':=' expr "in" expr
-    { Let (ann $1 <+> ann $6) $2 $4 $6 }
+    { Fix (Let (ann $1 <+> ann $6) $2 $4 $6) }
 
 ------------------------------------------------------------
 -- Patterns
 ------------------------------------------------------------
 
 pattern :: { Pattern ParserPhase }
-  : ident
-    { let TIdent name = val $1
-      in PVar (ann $1) name
-    }
-  | int
+  : int
     { let TInt x = val $1
-      in PInt (ann $1) x
+      in Fix (PInt (ann $1) x)
+    }
+  | ident
+    { let TIdent name = val $1
+      in Fix (PVar (ann $1) name)
     }
   | '_'
-    { PWildcard (ann $1) }
+    { Fix (PWildcard (ann $1)) }
   | '(' pattern_inner ')'
     { setAnn (ann $1 <+> ann $3) $2 }
+  | '{' ident '}'
+    { let TIdent s = val $2
+      in Fix (PImp (ann $1 <+> ann $3) s)
+    }
+  | '{' ident ':' expr '}'
+    { let TIdent s = val $2
+      in Fix (PImpTy (ann $1 <+> ann $5) s $4)
+    }
 
 pattern_inner :: { Pattern ParserPhase }
   : ident many1(pattern)
     { let TIdent name = val $1
-      in PCon (ann $1 <+> ann (NE.last $2)) name (NE.toList $2)
+      in Fix (PCon (ann $1 <+> ann (NE.last $2)) name (NE.toList $2))
     }
   | pattern
     { $1 }
 
 ------------------------------------------------------------
--- Others
+-- Module paths
 ------------------------------------------------------------
 
 module_path :: { Located ModulePath }
@@ -186,7 +202,7 @@ module_path :: { Located ModulePath }
   | modulepath
     { let TModulePath mp = val $1
       in (ann $1) @: mp
-  }
+    }
 
 ------------------------------------------------------------
 -- Utils

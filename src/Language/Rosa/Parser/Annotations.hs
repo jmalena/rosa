@@ -26,7 +26,7 @@ type instance XApp      ParserPhase = SrcSpan
 type instance XAbs      ParserPhase = SrcSpan
 type instance XPi       ParserPhase = SrcSpan
 type instance XUniverse ParserPhase = SrcSpan
-type instance XTyped    ParserPhase = SrcSpan
+type instance XTy       ParserPhase = SrcSpan
 type instance XLet      ParserPhase = SrcSpan
 type instance XBoolLit  ParserPhase = SrcSpan
 type instance XIntLit   ParserPhase = SrcSpan
@@ -34,25 +34,25 @@ type instance XIntLit   ParserPhase = SrcSpan
 instance HasAnn (Expr ParserPhase) where
   type AnnType (Expr ParserPhase) = SrcSpan
 
-  ann (Var a _)      = a
-  ann (App a _ _)    = a
-  ann (Abs a _ _)    = a
-  ann (Pi a _ _ _)   = a
-  ann (Universe a _) = a
-  ann (Typed a _ _)  = a
-  ann (Let a _ _ _)  = a
-  ann (BoolLit a _)  = a
-  ann (IntLit a _)   = a
+  ann (Fix (Var a _))      = a
+  ann (Fix (App a _ _))    = a
+  ann (Fix (Abs a _ _))    = a
+  ann (Fix (Pi a _ _ _))   = a
+  ann (Fix (Universe a _)) = a
+  ann (Fix (Ty a _ _))     = a
+  ann (Fix (Let a _ _ _))  = a
+  ann (Fix (BoolLit a _))  = a
+  ann (Fix (IntLit a _))   = a
 
-  setAnn a' (Var _ x)        = Var a' x
-  setAnn a' (App _ f arg)    = App a' f arg
-  setAnn a' (Abs _ p e)      = Abs a' p e
-  setAnn a' (Pi _ p ty body) = Pi a' p ty body
-  setAnn a' (Universe _ l)   = Universe a' l
-  setAnn a' (Typed _ e t)    = Typed a' e t
-  setAnn a' (Let _ p e body) = Let a' p e body
-  setAnn a' (BoolLit _ b)    = BoolLit a' b
-  setAnn a' (IntLit _ n)     = IntLit a' n
+  setAnn a' (Fix (Var _ x))        = Fix (Var a' x)
+  setAnn a' (Fix (App _ f arg))    = Fix (App a' f arg)
+  setAnn a' (Fix (Abs _ p e))      = Fix (Abs a' p e)
+  setAnn a' (Fix (Pi _ p ty body)) = Fix (Pi a' p ty body)
+  setAnn a' (Fix (Universe _ l))   = Fix (Universe a' l)
+  setAnn a' (Fix (Ty _ e t))       = Fix (Ty a' e t)
+  setAnn a' (Fix (Let _ p e body)) = Fix (Let a' p e body)
+  setAnn a' (Fix (BoolLit _ b))    = Fix (BoolLit a' b)
+  setAnn a' (Fix (IntLit _ n))     = Fix (IntLit a' n)
 
 ------------------------------------------------------------
 -- Patterns
@@ -66,12 +66,12 @@ type instance XPWildcard ParserPhase = SrcSpan
 instance HasAnn (Pattern ParserPhase) where
   type AnnType (Pattern ParserPhase) = SrcSpan
 
-  ann (PCon a _ _)  = a
-  ann (PVar a _)    = a
-  ann (PInt a _)    = a
-  ann (PWildcard a) = a
+  ann (Fix (PCon a _ _))  = a
+  ann (Fix (PVar a _))    = a
+  ann (Fix (PInt a _))    = a
+  ann (Fix (PWildcard a)) = a
 
-  setAnn a' (PCon _ name args) = PCon a' name args
-  setAnn a' (PVar _ name)      = PVar a' name
-  setAnn a' (PInt _ x)         = PInt a' x
-  setAnn a' (PWildcard _)      = PWildcard a'
+  setAnn a' (Fix (PCon _ name args)) = Fix (PCon a' name args)
+  setAnn a' (Fix (PVar _ name))      = Fix (PVar a' name)
+  setAnn a' (Fix (PInt _ x))         = Fix (PInt a' x)
+  setAnn a' (Fix (PWildcard _))      = Fix (PWildcard a')

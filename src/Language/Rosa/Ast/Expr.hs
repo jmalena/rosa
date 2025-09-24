@@ -1,26 +1,35 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Language.Rosa.Ast.Expr where
 
-import Language.Rosa.Ast.Pattern
+import {-# SOURCE #-} Language.Rosa.Ast.Pattern
+import Language.Rosa.Core
+
+-- | NOTE: PatternF fixpoint is defined here.
+type Pattern p = Fix (PatternF p)
 
 type family XVar      p
 type family XApp      p
 type family XAbs      p
 type family XPi       p
 type family XUniverse p
-type family XTyped    p
+type family XTy       p
 type family XLet      p
 type family XBoolLit  p
 type family XIntLit   p
 
-data Expr p
-  = Var (XVar p) String                        -- ^ variable reference
-  | App (XApp p) (Expr p) (Expr p)             -- ^ function application
-  | Abs (XAbs p) (Pattern p) (Expr p)          -- ^ λ-abstraction
-  | Pi (XPi p) (Pattern p) (Expr p) (Expr p)   -- ^ Π-type
-  | Universe (XUniverse p) Word                -- ^ universe type
-  | Typed (XTyped p) (Expr p) (Expr p)         -- ^ type ascription
-  | Let (XLet p) (Pattern p) (Expr p) (Expr p) -- ^ let-binding
-  | BoolLit (XBoolLit p) Bool                  -- ^ boolean literal
-  | IntLit (XIntLit p) Word                    -- ^ integer literal
+data ExprF p f
+  = Var (XVar p) String           -- ^ variable
+  | App (XApp p) f f              -- ^ argument
+  | ImpApp (XApp p) f             -- ^ {argument}
+  | Abs (XAbs p) (Pattern p) f    -- ^ λ-abstraction
+  | Pi (XPi p) (Pattern p) f f    -- ^ Π-type
+  | Universe (XUniverse p) Word   -- ^ universe type
+  | Ty (XTy p) f f                -- ^ type ascription
+  | Let (XLet p) (Pattern p) f f  -- ^ let-binding
+  | BoolLit (XBoolLit p) Bool     -- ^ boolean literal
+  | IntLit (XIntLit p) Word       -- ^ integer literal
+  deriving Functor
+
+type Expr p = Fix (ExprF p)

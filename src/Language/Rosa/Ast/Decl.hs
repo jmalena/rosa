@@ -1,40 +1,44 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Language.Rosa.Ast.Decl where
 
+import qualified Data.List.NonEmpty as NE
+
 import Language.Rosa.Core
 import Language.Rosa.Ast.Expr
 import Language.Rosa.Ast.Pattern
-
-import qualified Data.List.NonEmpty as NE
 
 type family XUseModule p
 type family XTySign    p
 type family XPatBind   p
 type family XFunBind   p
 
-data Decl p
-  -- | Module import, e.g. "use rosa.mem.alloc".
+data DeclF p f
+  -- | Module import
   = UseModule
     { useModuleAnn  :: XUseModule p
     , useModulePath :: ModulePath
     }
-    -- | Type signature, e.g. "f : int -> int"
+    -- | Type signature
   | TySign
     { tySignAnn :: XTySign p
     , tySignId  :: String
-    , tySignRhs :: Expr p
+    , tySignRhs :: f
     }
-    -- | Pattern bind, e.g. "(lhs_1, _) := rhs".
+    -- | Pattern binding
   | PatBind
     { patBindAnn :: XPatBind p
     , patBindLhs :: Pattern p
-    , patBindRhs :: Expr p
+    , patBindRhs :: f
     }
-    -- | Function bind, e.g. "f x := 2*x".
+    -- | Function binding
   | FunBind
     { funBindAnn     :: XFunBind p
     , funBindId      :: String
     , funBindMatches :: NE.NonEmpty (Pattern p)
-    , funBindRhs     :: Expr p
+    , funBindRhs     :: f
     }
+  deriving Functor
+
+type Decl p = DeclF p (Expr p)

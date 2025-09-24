@@ -27,6 +27,7 @@ library
                         Language.Rosa.Ast.Module
                         Language.Rosa.Ast.Pattern
                         Language.Rosa.Core.Annotation
+                        Language.Rosa.Core.Fix
                         Language.Rosa.Core.InputSource
                         Language.Rosa.Core.ModulePath
                         Language.Rosa.Core.SourceSpan
